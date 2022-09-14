@@ -1,0 +1,66 @@
+{
+  "applications": ["lobby"],
+  "changelogDate": "20220809214818",
+  "dto": "mapstruct",
+  "embedded": false,
+  "entityTableName": "game_inst_props",
+  "fields": [
+    {
+      "fieldName": "version",
+      "fieldType": "Integer",
+      "options": {
+        "version": true
+      }
+    },
+    {
+      "fieldName": "seed",
+      "fieldType": "Long"
+    },
+    {
+      "fieldName": "mapName",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength"],
+      "fieldValidateRulesMaxlength": "45",
+      "javadoc": "NULL means use normal/standard"
+    },
+    {
+      "fieldName": "mapSize",
+      "fieldType": "Integer",
+      "javadoc": "NULL means not-specified"
+    },
+    {
+      "fieldName": "npcCount",
+      "fieldType": "Integer",
+      "javadoc": "NULL means not-specified"
+    },
+    {
+      "fieldName": "jsonProps",
+      "fieldType": "String",
+      "javadoc": "json form of game-specific properties"
+    },
+    {
+      "fieldName": "updated",
+      "fieldType": "Instant",
+      "fieldValidateRules": ["required"]
+    }
+  ],
+  "fluentMethods": true,
+  "javadoc": "the final negotiated properties for GameInst",
+  "jpaMetamodelFiltering": false,
+  "name": "GameInstProps",
+  "pagination": "no",
+  "readOnly": false,
+  "relationships": [
+    {
+      "options": {
+        "id": true
+      },
+      "otherEntityName": "gameInst",
+      "otherEntityRelationshipName": "props",
+      "ownerSide": true,
+      "relationshipName": "gameInst",
+      "relationshipType": "one-to-one"
+    }
+  ],
+  "service": "serviceClass"
+}

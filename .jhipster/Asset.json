@@ -1,0 +1,57 @@
+{
+  "applications": ["lobby"],
+  "changelogDate": "20220809214518",
+  "dto": "mapstruct",
+  "embedded": false,
+  "entityTableName": "asset",
+  "fields": [
+    {
+      "fieldName": "version",
+      "fieldType": "Integer",
+      "options": {
+        "version": true
+      }
+    },
+    {
+      "fieldName": "name",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength"],
+      "fieldValidateRulesMaxlength": "45",
+      "javadoc": "display name"
+    },
+    {
+      "fieldName": "main",
+      "fieldType": "Boolean",
+      "javadoc": "IPlayer - can be player.main_jar"
+    },
+    {
+      "fieldName": "auto",
+      "fieldType": "Boolean",
+      "javadoc": "bot is full-auto"
+    },
+    {
+      "fieldName": "path",
+      "fieldType": "String",
+      "javadoc": "url to asset (class or document/resource)\\njar-path ! fqcn.of.asset.class\\njar-path ! path/inside/jar/document\\nURL=getenv(“ASSETBASE”)+path/to/release.jar ! user.supplied.Player"
+    },
+    {
+      "fieldName": "include",
+      "fieldType": "String",
+      "javadoc": "comma-separated list of asset Ids"
+    }
+  ],
+  "fluentMethods": true,
+  "javadoc": "Assets owned by a member/user; (the horses) a virtual file-system?",
+  "jpaMetamodelFiltering": false,
+  "name": "Asset",
+  "pagination": "no",
+  "readOnly": false,
+  "relationships": [
+    {
+      "otherEntityName": "user",
+      "relationshipName": "user",
+      "relationshipType": "many-to-one"
+    }
+  ],
+  "service": "serviceClass"
+}

@@ -1,0 +1,76 @@
+<div class="d-flex justify-content-center">
+  <div class="col-8">
+    <div *ngIf="player">
+      <h2 data-cy="playerDetailsHeading"><span jhiTranslate="lobbyApp.player.detail.title">Player</span></h2>
+
+      <hr />
+
+      <jhi-alert-error></jhi-alert-error>
+
+      <jhi-alert></jhi-alert>
+
+      <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="global.field.id">ID</span></dt>
+        <dd>
+          <span>{{ player.id }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.player.version">Version</span></dt>
+        <dd>
+          <span>{{ player.version }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.player.name" [ngbTooltip]="'lobbyApp.player.help.name' | translate">Name</span></dt>
+        <dd>
+          <span>{{ player.name }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.player.rank" [ngbTooltip]="'lobbyApp.player.help.rank' | translate">Rank</span></dt>
+        <dd>
+          <span>{{ player.rank }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.player.score" [ngbTooltip]="'lobbyApp.player.help.score' | translate">Score</span></dt>
+        <dd>
+          <span>{{ player.score }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.player.scoreTime">Score Time</span></dt>
+        <dd>
+          <span>{{ player.scoreTime | formatMediumDatetime }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.player.rankTime">Rank Time</span></dt>
+        <dd>
+          <span>{{ player.rankTime | formatMediumDatetime }}</span>
+        </dd>
+        <dt>
+          <span jhiTranslate="lobbyApp.player.displayClient" [ngbTooltip]="'lobbyApp.player.help.displayClient' | translate"
+            >Display Client</span
+          >
+        </dt>
+        <dd>
+          <span>{{ player.displayClient }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.player.gameClass">Game Class</span></dt>
+        <dd>
+          <div *ngIf="player.gameClass">
+            <a [routerLink]="['/game-class', player.gameClass.id, 'view']">{{ player.gameClass?.id }}</a>
+          </div>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.player.mainJar">Main Jar</span></dt>
+        <dd>
+          <div *ngIf="player.mainJar">
+            <a [routerLink]="['/asset', player.mainJar.id, 'view']">{{ player.mainJar?.id }}</a>
+          </div>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.player.user">User</span></dt>
+        <dd>
+          <span>{{ player.user?.id }}</span>
+        </dd>
+      </dl>
+
+      <button type="submit" (click)="previousState()" class="btn btn-info" data-cy="entityDetailsBackButton">
+        <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+      </button>
+
+      <button type="button" [routerLink]="['/player', player.id, 'edit']" class="btn btn-primary">
+        <fa-icon icon="pencil-alt"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+      </button>
+    </div>
+  </div>
+</div>

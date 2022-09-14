@@ -1,0 +1,39 @@
+{
+  "applications": ["lobby"],
+  "changelogDate": "20220809214418",
+  "dto": "mapstruct",
+  "embedded": false,
+  "entityTableName": "account_info",
+  "fields": [
+    {
+      "fieldName": "version",
+      "fieldType": "Integer",
+      "options": {
+        "version": true
+      }
+    },
+    {
+      "fieldName": "type",
+      "fieldType": "String"
+    }
+  ],
+  "fluentMethods": true,
+  "javadoc": "extension to User (user is the owner of a stable of horses)\\nAccount Type indicates the payment properties and the League user is in.\\nmaybe this could fold into User.role ?",
+  "jpaMetamodelFiltering": false,
+  "name": "AccountInfo",
+  "pagination": "no",
+  "readOnly": false,
+  "relationships": [
+    {
+      "options": {
+        "id": true
+      },
+      "otherEntityName": "user",
+      "otherEntityRelationshipName": "accountInfo",
+      "ownerSide": true,
+      "relationshipName": "user",
+      "relationshipType": "one-to-one"
+    }
+  ],
+  "service": "serviceClass"
+}

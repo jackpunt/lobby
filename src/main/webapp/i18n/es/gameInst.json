@@ -1,0 +1,38 @@
+{
+  "lobbyApp": {
+    "gameInst": {
+      "home": {
+        "title": "Game Insts",
+        "refreshListLabel": "Refrescar lista",
+        "createLabel": "Crear nuevo Game Inst",
+        "createOrEditLabel": "Crear o editar Game Inst",
+        "notFound": "Ningún Game Insts encontrado"
+      },
+      "created": "Un nuevo Game Inst ha sido creado con el identificador {{ param }}",
+      "updated": "Un Game Inst ha sido actualizado con el identificador {{ param }}",
+      "deleted": "Un Game Inst ha sido eliminado con el identificador {{ param }}",
+      "delete": {
+        "question": "¿Seguro que quiere eliminar Game Inst {{ id }}?"
+      },
+      "detail": {
+        "title": "Game Inst"
+      },
+      "id": "ID",
+      "version": "Version",
+      "gameName": "Game Name",
+      "hostUrl": "Host Url",
+      "passcode": "Passcode",
+      "created": "Created",
+      "started": "Started",
+      "finished": "Finished",
+      "updated": "Updated",
+      "scoreA": "Score A",
+      "scoreB": "Score B",
+      "ticks": "Ticks",
+      "playerA": "Player A",
+      "playerB": "Player B",
+      "gameClass": "Game Class",
+      "props": "Props"
+    }
+  }
+}

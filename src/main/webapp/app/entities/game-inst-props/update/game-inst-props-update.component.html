@@ -1,0 +1,148 @@
+<div class="d-flex justify-content-center">
+  <div class="col-8">
+    <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
+      <h2
+        id="jhi-game-inst-props-heading"
+        data-cy="GameInstPropsCreateUpdateHeading"
+        jhiTranslate="lobbyApp.gameInstProps.home.createOrEditLabel"
+      >
+        Create or edit a Game Inst Props
+      </h2>
+
+      <div>
+        <jhi-alert-error></jhi-alert-error>
+
+        <div class="row mb-3" *ngIf="editForm.controls.id.value !== null">
+          <label class="form-label" jhiTranslate="global.field.id" for="field_id">ID</label>
+          <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
+        </div>
+
+        <div class="row mb-3">
+          <label class="form-label" jhiTranslate="lobbyApp.gameInstProps.version" for="field_version">Version</label>
+          <input type="number" class="form-control" name="version" id="field_version" data-cy="version" formControlName="version" />
+        </div>
+
+        <div class="row mb-3">
+          <label class="form-label" jhiTranslate="lobbyApp.gameInstProps.seed" for="field_seed">Seed</label>
+          <input type="number" class="form-control" name="seed" id="field_seed" data-cy="seed" formControlName="seed" />
+        </div>
+
+        <div class="row mb-3">
+          <label
+            class="form-label"
+            jhiTranslate="lobbyApp.gameInstProps.mapName"
+            for="field_mapName"
+            [ngbTooltip]="'lobbyApp.gameInstProps.help.mapName' | translate"
+            >Map Name</label
+          >
+          <input type="text" class="form-control" name="mapName" id="field_mapName" data-cy="mapName" formControlName="mapName" />
+          <div *ngIf="editForm.get('mapName')!.invalid && (editForm.get('mapName')!.dirty || editForm.get('mapName')!.touched)">
+            <small
+              class="form-text text-danger"
+              *ngIf="editForm.get('mapName')?.errors?.maxlength"
+              jhiTranslate="entity.validation.maxlength"
+              [translateValues]="{ max: 45 }"
+            >
+              This field cannot be longer than 45 characters.
+            </small>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <label
+            class="form-label"
+            jhiTranslate="lobbyApp.gameInstProps.mapSize"
+            for="field_mapSize"
+            [ngbTooltip]="'lobbyApp.gameInstProps.help.mapSize' | translate"
+            >Map Size</label
+          >
+          <input type="number" class="form-control" name="mapSize" id="field_mapSize" data-cy="mapSize" formControlName="mapSize" />
+        </div>
+
+        <div class="row mb-3">
+          <label
+            class="form-label"
+            jhiTranslate="lobbyApp.gameInstProps.npcCount"
+            for="field_npcCount"
+            [ngbTooltip]="'lobbyApp.gameInstProps.help.npcCount' | translate"
+            >Npc Count</label
+          >
+          <input type="number" class="form-control" name="npcCount" id="field_npcCount" data-cy="npcCount" formControlName="npcCount" />
+        </div>
+
+        <div class="row mb-3">
+          <label
+            class="form-label"
+            jhiTranslate="lobbyApp.gameInstProps.jsonProps"
+            for="field_jsonProps"
+            [ngbTooltip]="'lobbyApp.gameInstProps.help.jsonProps' | translate"
+            >Json Props</label
+          >
+          <input type="text" class="form-control" name="jsonProps" id="field_jsonProps" data-cy="jsonProps" formControlName="jsonProps" />
+        </div>
+
+        <div class="row mb-3">
+          <label class="form-label" jhiTranslate="lobbyApp.gameInstProps.updated" for="field_updated">Updated</label>
+          <div class="d-flex">
+            <input
+              id="field_updated"
+              data-cy="updated"
+              type="datetime-local"
+              class="form-control"
+              name="updated"
+              formControlName="updated"
+              placeholder="YYYY-MM-DD HH:mm"
+            />
+          </div>
+          <div *ngIf="editForm.get('updated')!.invalid && (editForm.get('updated')!.dirty || editForm.get('updated')!.touched)">
+            <small
+              class="form-text text-danger"
+              *ngIf="editForm.get('updated')?.errors?.required"
+              jhiTranslate="entity.validation.required"
+            >
+              This field is required.
+            </small>
+            <small
+              class="form-text text-danger"
+              [hidden]="!editForm.get('updated')?.errors?.datetimelocal"
+              jhiTranslate="entity.validation.datetimelocal"
+            >
+              This field should be a date and time.
+            </small>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <label class="form-label" jhiTranslate="lobbyApp.gameInstProps.gameInst" for="field_gameInst">Game Inst</label>
+          <select
+            class="form-control"
+            id="field_gameInst"
+            data-cy="gameInst"
+            name="gameInst"
+            formControlName="gameInst"
+            [compareWith]="compareGameInst"
+          >
+            <option [ngValue]="null"></option>
+            <option [ngValue]="gameInstOption" *ngFor="let gameInstOption of gameInstsCollection">{{ gameInstOption.id }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <button type="button" id="cancel-save" data-cy="entityCreateCancelButton" class="btn btn-secondary" (click)="previousState()">
+          <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+
+        <button
+          type="submit"
+          id="save-entity"
+          data-cy="entityCreateSaveButton"
+          [disabled]="editForm.invalid || isSaving"
+          class="btn btn-primary"
+        >
+          <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

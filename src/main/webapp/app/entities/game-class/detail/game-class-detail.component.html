@@ -1,0 +1,72 @@
+<div class="d-flex justify-content-center">
+  <div class="col-8">
+    <div *ngIf="gameClass">
+      <h2 data-cy="gameClassDetailsHeading"><span jhiTranslate="lobbyApp.gameClass.detail.title">Game Class</span></h2>
+
+      <hr />
+
+      <jhi-alert-error></jhi-alert-error>
+
+      <jhi-alert></jhi-alert>
+
+      <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="global.field.id">ID</span></dt>
+        <dd>
+          <span>{{ gameClass.id }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameClass.version">Version</span></dt>
+        <dd>
+          <span>{{ gameClass.version }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameClass.name" [ngbTooltip]="'lobbyApp.gameClass.help.name' | translate">Name</span></dt>
+        <dd>
+          <span>{{ gameClass.name }}</span>
+        </dd>
+        <dt>
+          <span jhiTranslate="lobbyApp.gameClass.revision" [ngbTooltip]="'lobbyApp.gameClass.help.revision' | translate">Revision</span>
+        </dt>
+        <dd>
+          <span>{{ gameClass.revision }}</span>
+        </dd>
+        <dt>
+          <span jhiTranslate="lobbyApp.gameClass.launcherPath" [ngbTooltip]="'lobbyApp.gameClass.help.launcherPath' | translate"
+            >Launcher Path</span
+          >
+        </dt>
+        <dd>
+          <span>{{ gameClass.launcherPath }}</span>
+        </dd>
+        <dt>
+          <span jhiTranslate="lobbyApp.gameClass.gamePath" [ngbTooltip]="'lobbyApp.gameClass.help.gamePath' | translate">Game Path</span>
+        </dt>
+        <dd>
+          <span>{{ gameClass.gamePath }}</span>
+        </dd>
+        <dt>
+          <span jhiTranslate="lobbyApp.gameClass.docsPath" [ngbTooltip]="'lobbyApp.gameClass.help.docsPath' | translate">Docs Path</span>
+        </dt>
+        <dd>
+          <span>{{ gameClass.docsPath }}</span>
+        </dd>
+        <dt>
+          <span jhiTranslate="lobbyApp.gameClass.propNames" [ngbTooltip]="'lobbyApp.gameClass.help.propNames' | translate">Prop Names</span>
+        </dt>
+        <dd>
+          <span>{{ gameClass.propNames }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameClass.updated">Updated</span></dt>
+        <dd>
+          <span>{{ gameClass.updated | formatMediumDatetime }}</span>
+        </dd>
+      </dl>
+
+      <button type="submit" (click)="previousState()" class="btn btn-info" data-cy="entityDetailsBackButton">
+        <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+      </button>
+
+      <button type="button" [routerLink]="['/game-class', gameClass.id, 'edit']" class="btn btn-primary">
+        <fa-icon icon="pencil-alt"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+      </button>
+    </div>
+  </div>
+</div>

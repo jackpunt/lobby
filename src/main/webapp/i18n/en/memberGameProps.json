@@ -1,0 +1,39 @@
+{
+  "lobbyApp": {
+    "memberGameProps": {
+      "home": {
+        "title": "Member Game Props",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new Member Game Props",
+        "createOrEditLabel": "Create or edit a Member Game Props",
+        "notFound": "No Member Game Props found"
+      },
+      "created": "A new Member Game Props is created with identifier {{ param }}",
+      "updated": "A Member Game Props is updated with identifier {{ param }}",
+      "deleted": "A Member Game Props is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete Member Game Props {{ id }}?"
+      },
+      "detail": {
+        "title": "Member Game Props"
+      },
+      "id": "ID",
+      "version": "Version",
+      "seed": "Seed",
+      "mapName": "Map Name",
+      "mapSize": "Map Size",
+      "npcCount": "Npc Count",
+      "jsonProps": "Json Props",
+      "configName": "Config Name",
+      "user": "User",
+      "gameClass": "Game Class",
+      "help": {
+        "mapName": "NULL means use normal/standard",
+        "mapSize": "NULL means not-specified",
+        "npcCount": "NULL means not-specified",
+        "jsonProps": "json form of game-specific properties",
+        "configName": "MyGameConfig"
+      }
+    }
+  }
+}

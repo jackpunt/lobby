@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <!--
+        Added the entity Asset.
+    -->
+    <changeSet id="20220809214518-1" author="jhipster">
+        <createTable tableName="asset" remarks="Assets owned by a member/user; (the horses) a virtual file-system?">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="version" type="integer">
+                <constraints nullable="true" />
+            </column>
+            <column name="name" type="varchar(45)" remarks="display name">
+                <constraints nullable="true" />
+            </column>
+            <column name="main" type="boolean" remarks="IPlayer - can be player.main_jar">
+                <constraints nullable="true" />
+            </column>
+            <column name="auto" type="boolean" remarks="bot is full-auto">
+                <constraints nullable="true" />
+            </column>
+            <column name="path" type="varchar(255)" remarks="url to asset (class or document/resource)\njar-path ! fqcn.of.asset.class\njar-path ! path/inside/jar/document\nURL=getenv(“ASSETBASE”)+path/to/release.jar ! user.supplied.Player">
+                <constraints nullable="true" />
+            </column>
+            <column name="include" type="varchar(255)" remarks="comma-separated list of asset Ids">
+                <constraints nullable="true" />
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="true" />
+            </column>
+            <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here -->
+        </createTable>
+    </changeSet>
+
+    <!-- jhipster-needle-liquibase-add-changeset - JHipster will add changesets here -->
+
+    <!--
+        Load sample data generated with Faker.js
+        - This data can be easily edited using a CSV editor (or even MS Excel) and
+          is located in the 'src/main/resources/config/liquibase/fake-data' directory
+        - By default this data is applied when running with the JHipster 'dev' profile.
+          This can be customized by adding or removing 'faker' in the 'spring.liquibase.contexts'
+          Spring Boot configuration key.
+    -->
+    <changeSet id="20220809214518-1-data" author="jhipster" context="faker">
+        <loadData
+                  file="config/liquibase/fake-data/asset.csv"
+                  separator=";"
+                  tableName="asset"
+                  usePreparedStatements="true">
+            <column name="id" type="numeric"/>
+            <column name="version" type="numeric"/>
+            <column name="name" type="string"/>
+            <column name="main" type="boolean"/>
+            <column name="auto" type="boolean"/>
+            <column name="path" type="string"/>
+            <column name="include" type="string"/>
+            <!-- jhipster-needle-liquibase-add-loadcolumn - JHipster (and/or extensions) can add load columns here -->
+        </loadData>
+    </changeSet>
+</databaseChangeLog>

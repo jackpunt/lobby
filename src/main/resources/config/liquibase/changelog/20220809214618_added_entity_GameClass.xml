@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <!--
+        Added the entity GameClass.
+    -->
+    <changeSet id="20220809214618-1" author="jhipster">
+        <createTable tableName="game_class" remarks="Which Game engine/jar to play.">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="version" type="integer">
+                <constraints nullable="true" />
+            </column>
+            <column name="name" type="varchar(45)" remarks="a unique name for this GameClass">
+                <constraints nullable="false" />
+            </column>
+            <column name="revision" type="varchar(24)" remarks="major.minor.patch.TYPE [semver]">
+                <constraints nullable="true" />
+            </column>
+            <column name="launcher_path" type="varchar(255)" remarks="jar-path ! fqcn.of.launcher\nURL=getenv(“GAMEBASE”)+path/to/release.jar ! fqcn.launcher">
+                <constraints nullable="true" />
+            </column>
+            <column name="game_path" type="varchar(255)" remarks="jar-path ! fqcn.of.game\nURL=getenv(“GAMEBASE”)+path/to/release.jar ! pkg.main">
+                <constraints nullable="true" />
+            </column>
+            <column name="docs_path" type="varchar(255)" remarks="doc-path/to/index.html\nURL=getenv(“GAMEBASE”)+path/to/release.jar ! doc/path/index.html">
+                <constraints nullable="true" />
+            </column>
+            <column name="prop_names" type="varchar(255)" remarks="a comma-separated string of property names for this GameClass\nonly these prop_names can appear in the game_props.json associated with this game_class">
+                <constraints nullable="true" />
+            </column>
+            <column name="updated" type="${datetimeType}">
+                <constraints nullable="false" />
+            </column>
+            <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here -->
+        </createTable>
+        <dropDefaultValue tableName="game_class" columnName="updated" columnDataType="${datetimeType}"/>
+    </changeSet>
+
+    <!-- jhipster-needle-liquibase-add-changeset - JHipster will add changesets here -->
+
+    <!--
+        Load sample data generated with Faker.js
+        - This data can be easily edited using a CSV editor (or even MS Excel) and
+          is located in the 'src/main/resources/config/liquibase/fake-data' directory
+        - By default this data is applied when running with the JHipster 'dev' profile.
+          This can be customized by adding or removing 'faker' in the 'spring.liquibase.contexts'
+          Spring Boot configuration key.
+    -->
+    <changeSet id="20220809214618-1-data" author="jhipster" context="faker">
+        <loadData
+                  file="config/liquibase/fake-data/game_class.csv"
+                  separator=";"
+                  tableName="game_class"
+                  usePreparedStatements="true">
+            <column name="id" type="numeric"/>
+            <column name="version" type="numeric"/>
+            <column name="name" type="string"/>
+            <column name="revision" type="string"/>
+            <column name="launcher_path" type="string"/>
+            <column name="game_path" type="string"/>
+            <column name="docs_path" type="string"/>
+            <column name="prop_names" type="string"/>
+            <column name="updated" type="date"/>
+            <!-- jhipster-needle-liquibase-add-loadcolumn - JHipster (and/or extensions) can add load columns here -->
+        </loadData>
+    </changeSet>
+</databaseChangeLog>

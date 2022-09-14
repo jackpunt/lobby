@@ -1,0 +1,78 @@
+<div class="d-flex justify-content-center">
+  <div class="col-8">
+    <div *ngIf="gameInstProps">
+      <h2 data-cy="gameInstPropsDetailsHeading"><span jhiTranslate="lobbyApp.gameInstProps.detail.title">Game Inst Props</span></h2>
+
+      <hr />
+
+      <jhi-alert-error></jhi-alert-error>
+
+      <jhi-alert></jhi-alert>
+
+      <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="global.field.id">ID</span></dt>
+        <dd>
+          <span>{{ gameInstProps.id }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInstProps.version">Version</span></dt>
+        <dd>
+          <span>{{ gameInstProps.version }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInstProps.seed">Seed</span></dt>
+        <dd>
+          <span>{{ gameInstProps.seed }}</span>
+        </dd>
+        <dt>
+          <span jhiTranslate="lobbyApp.gameInstProps.mapName" [ngbTooltip]="'lobbyApp.gameInstProps.help.mapName' | translate"
+            >Map Name</span
+          >
+        </dt>
+        <dd>
+          <span>{{ gameInstProps.mapName }}</span>
+        </dd>
+        <dt>
+          <span jhiTranslate="lobbyApp.gameInstProps.mapSize" [ngbTooltip]="'lobbyApp.gameInstProps.help.mapSize' | translate"
+            >Map Size</span
+          >
+        </dt>
+        <dd>
+          <span>{{ gameInstProps.mapSize }}</span>
+        </dd>
+        <dt>
+          <span jhiTranslate="lobbyApp.gameInstProps.npcCount" [ngbTooltip]="'lobbyApp.gameInstProps.help.npcCount' | translate"
+            >Npc Count</span
+          >
+        </dt>
+        <dd>
+          <span>{{ gameInstProps.npcCount }}</span>
+        </dd>
+        <dt>
+          <span jhiTranslate="lobbyApp.gameInstProps.jsonProps" [ngbTooltip]="'lobbyApp.gameInstProps.help.jsonProps' | translate"
+            >Json Props</span
+          >
+        </dt>
+        <dd>
+          <span>{{ gameInstProps.jsonProps }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInstProps.updated">Updated</span></dt>
+        <dd>
+          <span>{{ gameInstProps.updated | formatMediumDatetime }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInstProps.gameInst">Game Inst</span></dt>
+        <dd>
+          <div *ngIf="gameInstProps.gameInst">
+            <a [routerLink]="['/game-inst', gameInstProps.gameInst.id, 'view']">{{ gameInstProps.gameInst?.id }}</a>
+          </div>
+        </dd>
+      </dl>
+
+      <button type="submit" (click)="previousState()" class="btn btn-info" data-cy="entityDetailsBackButton">
+        <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+      </button>
+
+      <button type="button" [routerLink]="['/game-inst-props', gameInstProps.id, 'edit']" class="btn btn-primary">
+        <fa-icon icon="pencil-alt"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+      </button>
+    </div>
+  </div>
+</div>

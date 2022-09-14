@@ -1,0 +1,90 @@
+<div class="d-flex justify-content-center">
+  <div class="col-8">
+    <div *ngIf="gameInst">
+      <h2 data-cy="gameInstDetailsHeading"><span jhiTranslate="lobbyApp.gameInst.detail.title">Game Inst</span></h2>
+
+      <hr />
+
+      <jhi-alert-error></jhi-alert-error>
+
+      <jhi-alert></jhi-alert>
+
+      <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="global.field.id">ID</span></dt>
+        <dd>
+          <span>{{ gameInst.id }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.version">Version</span></dt>
+        <dd>
+          <span>{{ gameInst.version }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.gameName">Game Name</span></dt>
+        <dd>
+          <span>{{ gameInst.gameName }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.hostUrl">Host Url</span></dt>
+        <dd>
+          <span>{{ gameInst.hostUrl }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.passcode">Passcode</span></dt>
+        <dd>
+          <span>{{ gameInst.passcode }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.created">Created</span></dt>
+        <dd>
+          <span>{{ gameInst.created | formatMediumDatetime }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.started">Started</span></dt>
+        <dd>
+          <span>{{ gameInst.started | formatMediumDatetime }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.finished">Finished</span></dt>
+        <dd>
+          <span>{{ gameInst.finished | formatMediumDatetime }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.updated">Updated</span></dt>
+        <dd>
+          <span>{{ gameInst.updated | formatMediumDatetime }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.scoreA">Score A</span></dt>
+        <dd>
+          <span>{{ gameInst.scoreA }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.scoreB">Score B</span></dt>
+        <dd>
+          <span>{{ gameInst.scoreB }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.ticks">Ticks</span></dt>
+        <dd>
+          <span>{{ gameInst.ticks }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.playerA">Player A</span></dt>
+        <dd>
+          <div *ngIf="gameInst.playerA">
+            <a [routerLink]="['/player', gameInst.playerA.id, 'view']">{{ gameInst.playerA?.id }}</a>
+          </div>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.playerB">Player B</span></dt>
+        <dd>
+          <div *ngIf="gameInst.playerB">
+            <a [routerLink]="['/player', gameInst.playerB.id, 'view']">{{ gameInst.playerB?.id }}</a>
+          </div>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gameInst.gameClass">Game Class</span></dt>
+        <dd>
+          <div *ngIf="gameInst.gameClass">
+            <a [routerLink]="['/game-class', gameInst.gameClass.id, 'view']">{{ gameInst.gameClass?.id }}</a>
+          </div>
+        </dd>
+      </dl>
+
+      <button type="submit" (click)="previousState()" class="btn btn-info" data-cy="entityDetailsBackButton">
+        <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+      </button>
+
+      <button type="button" [routerLink]="['/game-inst', gameInst.id, 'edit']" class="btn btn-primary">
+        <fa-icon icon="pencil-alt"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+      </button>
+    </div>
+  </div>
+</div>

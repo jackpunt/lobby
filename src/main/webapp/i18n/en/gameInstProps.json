@@ -1,0 +1,37 @@
+{
+  "lobbyApp": {
+    "gameInstProps": {
+      "home": {
+        "title": "Game Inst Props",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new Game Inst Props",
+        "createOrEditLabel": "Create or edit a Game Inst Props",
+        "notFound": "No Game Inst Props found"
+      },
+      "created": "A new Game Inst Props is created with identifier {{ param }}",
+      "updated": "A Game Inst Props is updated with identifier {{ param }}",
+      "deleted": "A Game Inst Props is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete Game Inst Props {{ id }}?"
+      },
+      "detail": {
+        "title": "Game Inst Props"
+      },
+      "id": "ID",
+      "version": "Version",
+      "seed": "Seed",
+      "mapName": "Map Name",
+      "mapSize": "Map Size",
+      "npcCount": "Npc Count",
+      "jsonProps": "Json Props",
+      "updated": "Updated",
+      "gameInst": "Game Inst",
+      "help": {
+        "mapName": "NULL means use normal/standard",
+        "mapSize": "NULL means not-specified",
+        "npcCount": "NULL means not-specified",
+        "jsonProps": "json form of game-specific properties"
+      }
+    }
+  }
+}

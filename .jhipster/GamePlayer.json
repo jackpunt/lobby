@@ -1,0 +1,48 @@
+{
+  "applications": ["lobby"],
+  "changelogDate": "20220809214918",
+  "dto": "mapstruct",
+  "embedded": false,
+  "entityTableName": "game_player",
+  "fields": [
+    {
+      "fieldName": "version",
+      "fieldType": "Integer",
+      "options": {
+        "version": true
+      }
+    },
+    {
+      "fieldName": "role",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength", "required"],
+      "fieldValidateRulesMaxlength": "4",
+      "javadoc": "assigned in Lobby"
+    },
+    {
+      "fieldName": "ready",
+      "fieldType": "Integer",
+      "fieldValidateRules": ["required"],
+      "javadoc": "ack'd version; initial -1"
+    }
+  ],
+  "fluentMethods": true,
+  "javadoc": "one of 2 Players (A or B) in a GameInst",
+  "jpaMetamodelFiltering": false,
+  "name": "GamePlayer",
+  "pagination": "no",
+  "readOnly": false,
+  "relationships": [
+    {
+      "otherEntityName": "gameInst",
+      "relationshipName": "gameInst",
+      "relationshipType": "many-to-one"
+    },
+    {
+      "otherEntityName": "player",
+      "relationshipName": "player",
+      "relationshipType": "many-to-one"
+    }
+  ],
+  "service": "serviceClass"
+}

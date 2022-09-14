@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!--
+        Added the constraints for entity Player.
+    -->
+    <changeSet id="20220809215118-2" author="jhipster">
+
+        <addForeignKeyConstraint baseColumnNames="game_class_id"
+                                 baseTableName="player"
+                                 constraintName="fk_player__game_class_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="game_class"/>
+
+        <addForeignKeyConstraint baseColumnNames="main_jar_id"
+                                 baseTableName="player"
+                                 constraintName="fk_player__main_jar_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="asset"/>
+
+        <addForeignKeyConstraint baseColumnNames="user_id"
+                                 baseTableName="player"
+                                 constraintName="fk_player__user_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"/>
+    </changeSet>
+</databaseChangeLog>

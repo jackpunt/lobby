@@ -1,0 +1,32 @@
+{
+  "lobbyApp": {
+    "gamePlayer": {
+      "home": {
+        "title": "Game Players",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new Game Player",
+        "createOrEditLabel": "Create or edit a Game Player",
+        "notFound": "No Game Players found"
+      },
+      "created": "A new Game Player is created with identifier {{ param }}",
+      "updated": "A Game Player is updated with identifier {{ param }}",
+      "deleted": "A Game Player is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete Game Player {{ id }}?"
+      },
+      "detail": {
+        "title": "Game Player"
+      },
+      "id": "ID",
+      "version": "Version",
+      "role": "Role",
+      "ready": "Ready",
+      "gameInst": "Game Inst",
+      "player": "Player",
+      "help": {
+        "role": "assigned in Lobby",
+        "ready": "ack&#39;d version; initial -1"
+      }
+    }
+  }
+}

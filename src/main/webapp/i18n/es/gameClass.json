@@ -1,0 +1,39 @@
+{
+  "lobbyApp": {
+    "gameClass": {
+      "home": {
+        "title": "Game Classes",
+        "refreshListLabel": "Refrescar lista",
+        "createLabel": "Crear nuevo Game Class",
+        "createOrEditLabel": "Crear o editar Game Class",
+        "notFound": "Ningún Game Classes encontrado"
+      },
+      "created": "Un nuevo Game Class ha sido creado con el identificador {{ param }}",
+      "updated": "Un Game Class ha sido actualizado con el identificador {{ param }}",
+      "deleted": "Un Game Class ha sido eliminado con el identificador {{ param }}",
+      "delete": {
+        "question": "¿Seguro que quiere eliminar Game Class {{ id }}?"
+      },
+      "detail": {
+        "title": "Game Class"
+      },
+      "id": "ID",
+      "version": "Version",
+      "name": "Name",
+      "revision": "Revision",
+      "launcherPath": "Launcher Path",
+      "gamePath": "Game Path",
+      "docsPath": "Docs Path",
+      "propNames": "Prop Names",
+      "updated": "Updated",
+      "help": {
+        "name": "a unique name for this GameClass",
+        "revision": "major.minor.patch.TYPE [semver]",
+        "launcherPath": "jar-path ! fqcn.of.launcher\nURL=getenv(“GAMEBASE”)+path/to/release.jar ! fqcn.launcher",
+        "gamePath": "jar-path ! fqcn.of.game\nURL=getenv(“GAMEBASE”)+path/to/release.jar ! pkg.main",
+        "docsPath": "doc-path/to/index.html\nURL=getenv(“GAMEBASE”)+path/to/release.jar ! doc/path/index.html",
+        "propNames": "a comma-separated string of property names for this GameClass\nonly these prop_names can appear in the game_props.json associated with this game_class"
+      }
+    }
+  }
+}

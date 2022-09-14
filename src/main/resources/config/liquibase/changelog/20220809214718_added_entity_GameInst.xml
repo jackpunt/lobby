@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <!--
+        Added the entity GameInst.
+    -->
+    <changeSet id="20220809214718-1" author="jhipster">
+        <createTable tableName="game_inst" remarks="Instance of a Game.">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="version" type="integer">
+                <constraints nullable="true" />
+            </column>
+            <column name="game_name" type="varchar(64)">
+                <constraints nullable="true" />
+            </column>
+            <column name="host_url" type="varchar(64)">
+                <constraints nullable="true" />
+            </column>
+            <column name="passcode" type="varchar(64)">
+                <constraints nullable="true" />
+            </column>
+            <column name="created" type="${datetimeType}">
+                <constraints nullable="false" />
+            </column>
+            <column name="started" type="${datetimeType}">
+                <constraints nullable="true" />
+            </column>
+            <column name="finished" type="${datetimeType}">
+                <constraints nullable="true" />
+            </column>
+            <column name="updated" type="${datetimeType}">
+                <constraints nullable="false" />
+            </column>
+            <column name="score_a" type="integer">
+                <constraints nullable="true" />
+            </column>
+            <column name="score_b" type="integer">
+                <constraints nullable="true" />
+            </column>
+            <column name="ticks" type="integer">
+                <constraints nullable="true" />
+            </column>
+            <column name="playera_id" type="bigint">
+                <constraints nullable="true" />
+            </column>
+            <column name="playerb_id" type="bigint">
+                <constraints nullable="true" />
+            </column>
+            <column name="game_class_id" type="bigint">
+                <constraints nullable="true" />
+            </column>
+            <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here -->
+        </createTable>
+        <dropDefaultValue tableName="game_inst" columnName="created" columnDataType="${datetimeType}"/>
+        <dropDefaultValue tableName="game_inst" columnName="started" columnDataType="${datetimeType}"/>
+        <dropDefaultValue tableName="game_inst" columnName="finished" columnDataType="${datetimeType}"/>
+        <dropDefaultValue tableName="game_inst" columnName="updated" columnDataType="${datetimeType}"/>
+    </changeSet>
+
+    <!-- jhipster-needle-liquibase-add-changeset - JHipster will add changesets here -->
+
+    <!--
+        Load sample data generated with Faker.js
+        - This data can be easily edited using a CSV editor (or even MS Excel) and
+          is located in the 'src/main/resources/config/liquibase/fake-data' directory
+        - By default this data is applied when running with the JHipster 'dev' profile.
+          This can be customized by adding or removing 'faker' in the 'spring.liquibase.contexts'
+          Spring Boot configuration key.
+    -->
+    <changeSet id="20220809214718-1-data" author="jhipster" context="faker">
+        <loadData
+                  file="config/liquibase/fake-data/game_inst.csv"
+                  separator=";"
+                  tableName="game_inst"
+                  usePreparedStatements="true">
+            <column name="id" type="numeric"/>
+            <column name="version" type="numeric"/>
+            <column name="game_name" type="string"/>
+            <column name="host_url" type="string"/>
+            <column name="passcode" type="string"/>
+            <column name="created" type="date"/>
+            <column name="started" type="date"/>
+            <column name="finished" type="date"/>
+            <column name="updated" type="date"/>
+            <column name="score_a" type="numeric"/>
+            <column name="score_b" type="numeric"/>
+            <column name="ticks" type="numeric"/>
+            <!-- jhipster-needle-liquibase-add-loadcolumn - JHipster (and/or extensions) can add load columns here -->
+        </loadData>
+    </changeSet>
+</databaseChangeLog>

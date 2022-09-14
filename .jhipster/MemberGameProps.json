@@ -1,0 +1,68 @@
+{
+  "applications": ["lobby"],
+  "changelogDate": "20220809215018",
+  "dto": "mapstruct",
+  "embedded": false,
+  "entityTableName": "member_game_props",
+  "fields": [
+    {
+      "fieldName": "version",
+      "fieldType": "Integer",
+      "options": {
+        "version": true
+      }
+    },
+    {
+      "fieldName": "seed",
+      "fieldType": "Long"
+    },
+    {
+      "fieldName": "mapName",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength"],
+      "fieldValidateRulesMaxlength": "45",
+      "javadoc": "NULL means use normal/standard"
+    },
+    {
+      "fieldName": "mapSize",
+      "fieldType": "Integer",
+      "javadoc": "NULL means not-specified"
+    },
+    {
+      "fieldName": "npcCount",
+      "fieldType": "Integer",
+      "javadoc": "NULL means not-specified"
+    },
+    {
+      "fieldName": "jsonProps",
+      "fieldType": "String",
+      "javadoc": "json form of game-specific properties"
+    },
+    {
+      "fieldName": "configName",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength"],
+      "fieldValidateRulesMaxlength": "45",
+      "javadoc": "MyGameConfig"
+    }
+  ],
+  "fluentMethods": true,
+  "javadoc": "member/player proposes properties for a new GameInst.",
+  "jpaMetamodelFiltering": false,
+  "name": "MemberGameProps",
+  "pagination": "no",
+  "readOnly": false,
+  "relationships": [
+    {
+      "otherEntityName": "user",
+      "relationshipName": "user",
+      "relationshipType": "many-to-one"
+    },
+    {
+      "otherEntityName": "gameClass",
+      "relationshipName": "gameClass",
+      "relationshipType": "many-to-one"
+    }
+  ],
+  "service": "serviceClass"
+}

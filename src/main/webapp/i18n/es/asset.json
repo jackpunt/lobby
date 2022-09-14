@@ -1,0 +1,37 @@
+{
+  "lobbyApp": {
+    "asset": {
+      "home": {
+        "title": "Assets",
+        "refreshListLabel": "Refrescar lista",
+        "createLabel": "Crear nuevo Asset",
+        "createOrEditLabel": "Crear o editar Asset",
+        "notFound": "Ningún Assets encontrado"
+      },
+      "created": "Un nuevo Asset ha sido creado con el identificador {{ param }}",
+      "updated": "Un Asset ha sido actualizado con el identificador {{ param }}",
+      "deleted": "Un Asset ha sido eliminado con el identificador {{ param }}",
+      "delete": {
+        "question": "¿Seguro que quiere eliminar Asset {{ id }}?"
+      },
+      "detail": {
+        "title": "Asset"
+      },
+      "id": "ID",
+      "version": "Version",
+      "name": "Name",
+      "main": "Main",
+      "auto": "Auto",
+      "path": "Path",
+      "include": "Include",
+      "user": "User",
+      "help": {
+        "name": "display name",
+        "main": "IPlayer - can be player.main_jar",
+        "auto": "bot is full-auto",
+        "path": "url to asset (class or document/resource)\njar-path ! fqcn.of.asset.class\njar-path ! path/inside/jar/document\nURL=getenv(“ASSETBASE”)+path/to/release.jar ! user.supplied.Player",
+        "include": "comma-separated list of asset Ids"
+      }
+    }
+  }
+}

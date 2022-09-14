@@ -1,0 +1,52 @@
+<div class="d-flex justify-content-center">
+  <div class="col-8">
+    <div *ngIf="gamePlayer">
+      <h2 data-cy="gamePlayerDetailsHeading"><span jhiTranslate="lobbyApp.gamePlayer.detail.title">Game Player</span></h2>
+
+      <hr />
+
+      <jhi-alert-error></jhi-alert-error>
+
+      <jhi-alert></jhi-alert>
+
+      <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="global.field.id">ID</span></dt>
+        <dd>
+          <span>{{ gamePlayer.id }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gamePlayer.version">Version</span></dt>
+        <dd>
+          <span>{{ gamePlayer.version }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gamePlayer.role" [ngbTooltip]="'lobbyApp.gamePlayer.help.role' | translate">Role</span></dt>
+        <dd>
+          <span>{{ gamePlayer.role }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gamePlayer.ready" [ngbTooltip]="'lobbyApp.gamePlayer.help.ready' | translate">Ready</span></dt>
+        <dd>
+          <span>{{ gamePlayer.ready }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gamePlayer.gameInst">Game Inst</span></dt>
+        <dd>
+          <div *ngIf="gamePlayer.gameInst">
+            <a [routerLink]="['/game-inst', gamePlayer.gameInst.id, 'view']">{{ gamePlayer.gameInst?.id }}</a>
+          </div>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.gamePlayer.player">Player</span></dt>
+        <dd>
+          <div *ngIf="gamePlayer.player">
+            <a [routerLink]="['/player', gamePlayer.player.id, 'view']">{{ gamePlayer.player?.id }}</a>
+          </div>
+        </dd>
+      </dl>
+
+      <button type="submit" (click)="previousState()" class="btn btn-info" data-cy="entityDetailsBackButton">
+        <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+      </button>
+
+      <button type="button" [routerLink]="['/game-player', gamePlayer.id, 'edit']" class="btn btn-primary">
+        <fa-icon icon="pencil-alt"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!--
+        Added the constraints for entity GameInstProps.
+    -->
+    <changeSet id="20220809214818-2" author="jhipster">
+
+        <addForeignKeyConstraint baseColumnNames="id"
+                                 baseTableName="game_inst_props"
+                                 constraintName="fk_game_inst_props__game_inst_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="game_inst"/>
+    </changeSet>
+</databaseChangeLog>

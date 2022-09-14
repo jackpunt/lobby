@@ -1,0 +1,184 @@
+<div class="d-flex justify-content-center">
+  <div class="col-8">
+    <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
+      <h2 id="jhi-player-heading" data-cy="PlayerCreateUpdateHeading" jhiTranslate="lobbyApp.player.home.createOrEditLabel">
+        Create or edit a Player
+      </h2>
+
+      <div>
+        <jhi-alert-error></jhi-alert-error>
+
+        <div class="row mb-3" *ngIf="editForm.controls.id.value !== null">
+          <label class="form-label" jhiTranslate="global.field.id" for="field_id">ID</label>
+          <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
+        </div>
+
+        <div class="row mb-3">
+          <label class="form-label" jhiTranslate="lobbyApp.player.version" for="field_version">Version</label>
+          <input type="number" class="form-control" name="version" id="field_version" data-cy="version" formControlName="version" />
+        </div>
+
+        <div class="row mb-3">
+          <label
+            class="form-label"
+            jhiTranslate="lobbyApp.player.name"
+            for="field_name"
+            [ngbTooltip]="'lobbyApp.player.help.name' | translate"
+            >Name</label
+          >
+          <input type="text" class="form-control" name="name" id="field_name" data-cy="name" formControlName="name" />
+          <div *ngIf="editForm.get('name')!.invalid && (editForm.get('name')!.dirty || editForm.get('name')!.touched)">
+            <small
+              class="form-text text-danger"
+              *ngIf="editForm.get('name')?.errors?.maxlength"
+              jhiTranslate="entity.validation.maxlength"
+              [translateValues]="{ max: 64 }"
+            >
+              This field cannot be longer than 64 characters.
+            </small>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <label
+            class="form-label"
+            jhiTranslate="lobbyApp.player.rank"
+            for="field_rank"
+            [ngbTooltip]="'lobbyApp.player.help.rank' | translate"
+            >Rank</label
+          >
+          <input type="number" class="form-control" name="rank" id="field_rank" data-cy="rank" formControlName="rank" />
+        </div>
+
+        <div class="row mb-3">
+          <label
+            class="form-label"
+            jhiTranslate="lobbyApp.player.score"
+            for="field_score"
+            [ngbTooltip]="'lobbyApp.player.help.score' | translate"
+            >Score</label
+          >
+          <input type="number" class="form-control" name="score" id="field_score" data-cy="score" formControlName="score" />
+        </div>
+
+        <div class="row mb-3">
+          <label class="form-label" jhiTranslate="lobbyApp.player.scoreTime" for="field_scoreTime">Score Time</label>
+          <div class="d-flex">
+            <input
+              id="field_scoreTime"
+              data-cy="scoreTime"
+              type="datetime-local"
+              class="form-control"
+              name="scoreTime"
+              formControlName="scoreTime"
+              placeholder="YYYY-MM-DD HH:mm"
+            />
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <label class="form-label" jhiTranslate="lobbyApp.player.rankTime" for="field_rankTime">Rank Time</label>
+          <div class="d-flex">
+            <input
+              id="field_rankTime"
+              data-cy="rankTime"
+              type="datetime-local"
+              class="form-control"
+              name="rankTime"
+              formControlName="rankTime"
+              placeholder="YYYY-MM-DD HH:mm"
+            />
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <label
+            class="form-label"
+            jhiTranslate="lobbyApp.player.displayClient"
+            for="field_displayClient"
+            [ngbTooltip]="'lobbyApp.player.help.displayClient' | translate"
+            >Display Client</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            name="displayClient"
+            id="field_displayClient"
+            data-cy="displayClient"
+            formControlName="displayClient"
+          />
+          <div
+            *ngIf="
+              editForm.get('displayClient')!.invalid && (editForm.get('displayClient')!.dirty || editForm.get('displayClient')!.touched)
+            "
+          >
+            <small
+              class="form-text text-danger"
+              *ngIf="editForm.get('displayClient')?.errors?.maxlength"
+              jhiTranslate="entity.validation.maxlength"
+              [translateValues]="{ max: 64 }"
+            >
+              This field cannot be longer than 64 characters.
+            </small>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <label class="form-label" jhiTranslate="lobbyApp.player.gameClass" for="field_gameClass">Game Class</label>
+          <select
+            class="form-control"
+            id="field_gameClass"
+            data-cy="gameClass"
+            name="gameClass"
+            formControlName="gameClass"
+            [compareWith]="compareGameClass"
+          >
+            <option [ngValue]="null"></option>
+            <option [ngValue]="gameClassOption" *ngFor="let gameClassOption of gameClassesSharedCollection">
+              {{ gameClassOption.id }}
+            </option>
+          </select>
+        </div>
+
+        <div class="row mb-3">
+          <label class="form-label" jhiTranslate="lobbyApp.player.mainJar" for="field_mainJar">Main Jar</label>
+          <select
+            class="form-control"
+            id="field_mainJar"
+            data-cy="mainJar"
+            name="mainJar"
+            formControlName="mainJar"
+            [compareWith]="compareAsset"
+          >
+            <option [ngValue]="null"></option>
+            <option [ngValue]="assetOption" *ngFor="let assetOption of assetsSharedCollection">{{ assetOption.id }}</option>
+          </select>
+        </div>
+
+        <div class="row mb-3">
+          <label class="form-label" jhiTranslate="lobbyApp.player.user" for="field_user">User</label>
+          <select class="form-control" id="field_user" data-cy="user" name="user" formControlName="user" [compareWith]="compareUser">
+            <option [ngValue]="null"></option>
+            <option [ngValue]="userOption" *ngFor="let userOption of usersSharedCollection">{{ userOption.id }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <button type="button" id="cancel-save" data-cy="entityCreateCancelButton" class="btn btn-secondary" (click)="previousState()">
+          <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+
+        <button
+          type="submit"
+          id="save-entity"
+          data-cy="entityCreateSaveButton"
+          [disabled]="editForm.invalid || isSaving"
+          class="btn btn-primary"
+        >
+          <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

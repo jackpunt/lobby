@@ -1,0 +1,56 @@
+<div class="d-flex justify-content-center">
+  <div class="col-8">
+    <div *ngIf="asset">
+      <h2 data-cy="assetDetailsHeading"><span jhiTranslate="lobbyApp.asset.detail.title">Asset</span></h2>
+
+      <hr />
+
+      <jhi-alert-error></jhi-alert-error>
+
+      <jhi-alert></jhi-alert>
+
+      <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="global.field.id">ID</span></dt>
+        <dd>
+          <span>{{ asset.id }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.asset.version">Version</span></dt>
+        <dd>
+          <span>{{ asset.version }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.asset.name" [ngbTooltip]="'lobbyApp.asset.help.name' | translate">Name</span></dt>
+        <dd>
+          <span>{{ asset.name }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.asset.main" [ngbTooltip]="'lobbyApp.asset.help.main' | translate">Main</span></dt>
+        <dd>
+          <span>{{ asset.main }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.asset.auto" [ngbTooltip]="'lobbyApp.asset.help.auto' | translate">Auto</span></dt>
+        <dd>
+          <span>{{ asset.auto }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.asset.path" [ngbTooltip]="'lobbyApp.asset.help.path' | translate">Path</span></dt>
+        <dd>
+          <span>{{ asset.path }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.asset.include" [ngbTooltip]="'lobbyApp.asset.help.include' | translate">Include</span></dt>
+        <dd>
+          <span>{{ asset.include }}</span>
+        </dd>
+        <dt><span jhiTranslate="lobbyApp.asset.user">User</span></dt>
+        <dd>
+          <span>{{ asset.user?.id }}</span>
+        </dd>
+      </dl>
+
+      <button type="submit" (click)="previousState()" class="btn btn-info" data-cy="entityDetailsBackButton">
+        <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+      </button>
+
+      <button type="button" [routerLink]="['/asset', asset.id, 'edit']" class="btn btn-primary">
+        <fa-icon icon="pencil-alt"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+      </button>
+    </div>
+  </div>
+</div>

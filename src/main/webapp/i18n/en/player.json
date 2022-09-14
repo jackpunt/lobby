@@ -1,0 +1,39 @@
+{
+  "lobbyApp": {
+    "player": {
+      "home": {
+        "title": "Players",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new Player",
+        "createOrEditLabel": "Create or edit a Player",
+        "notFound": "No Players found"
+      },
+      "created": "A new Player is created with identifier {{ param }}",
+      "updated": "A Player is updated with identifier {{ param }}",
+      "deleted": "A Player is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete Player {{ id }}?"
+      },
+      "detail": {
+        "title": "Player"
+      },
+      "id": "ID",
+      "version": "Version",
+      "name": "Name",
+      "rank": "Rank",
+      "score": "Score",
+      "scoreTime": "Score Time",
+      "rankTime": "Rank Time",
+      "displayClient": "Display Client",
+      "gameClass": "Game Class",
+      "mainJar": "Main Jar",
+      "user": "User",
+      "help": {
+        "name": "display name, as set by the owning Member.",
+        "rank": "NULL until ranked",
+        "score": "initial 0",
+        "displayClient": "URL path fragment to download display client from graid server.\nProbably redo as reference to display_client table entry or an asset entry."
+      }
+    }
+  }
+}

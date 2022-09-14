@@ -1,0 +1,95 @@
+{
+  "applications": ["lobby"],
+  "changelogDate": "20220809214718",
+  "dto": "mapstruct",
+  "embedded": false,
+  "entityTableName": "game_inst",
+  "fields": [
+    {
+      "fieldName": "version",
+      "fieldType": "Integer",
+      "options": {
+        "version": true
+      }
+    },
+    {
+      "fieldName": "gameName",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength"],
+      "fieldValidateRulesMaxlength": "64"
+    },
+    {
+      "fieldName": "hostUrl",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength"],
+      "fieldValidateRulesMaxlength": "64"
+    },
+    {
+      "fieldName": "passcode",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength"],
+      "fieldValidateRulesMaxlength": "64"
+    },
+    {
+      "fieldName": "created",
+      "fieldType": "Instant",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "started",
+      "fieldType": "Instant"
+    },
+    {
+      "fieldName": "finished",
+      "fieldType": "Instant"
+    },
+    {
+      "fieldName": "updated",
+      "fieldType": "Instant",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "scoreA",
+      "fieldType": "Integer"
+    },
+    {
+      "fieldName": "scoreB",
+      "fieldType": "Integer"
+    },
+    {
+      "fieldName": "ticks",
+      "fieldType": "Integer"
+    }
+  ],
+  "fluentMethods": true,
+  "javadoc": "Instance of a Game.",
+  "jpaMetamodelFiltering": false,
+  "name": "GameInst",
+  "pagination": "no",
+  "readOnly": false,
+  "relationships": [
+    {
+      "otherEntityName": "player",
+      "relationshipName": "playerA",
+      "relationshipType": "many-to-one"
+    },
+    {
+      "otherEntityName": "player",
+      "relationshipName": "playerB",
+      "relationshipType": "many-to-one"
+    },
+    {
+      "otherEntityName": "gameClass",
+      "relationshipName": "gameClass",
+      "relationshipType": "many-to-one"
+    },
+    {
+      "otherEntityName": "gameInstProps",
+      "otherEntityRelationshipName": "gameInst",
+      "ownerSide": false,
+      "relationshipName": "props",
+      "relationshipType": "one-to-one"
+    }
+  ],
+  "service": "serviceClass"
+}

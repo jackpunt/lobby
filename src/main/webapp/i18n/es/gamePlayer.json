@@ -1,0 +1,32 @@
+{
+  "lobbyApp": {
+    "gamePlayer": {
+      "home": {
+        "title": "Game Players",
+        "refreshListLabel": "Refrescar lista",
+        "createLabel": "Crear nuevo Game Player",
+        "createOrEditLabel": "Crear o editar Game Player",
+        "notFound": "Ningún Game Players encontrado"
+      },
+      "created": "Un nuevo Game Player ha sido creado con el identificador {{ param }}",
+      "updated": "Un Game Player ha sido actualizado con el identificador {{ param }}",
+      "deleted": "Un Game Player ha sido eliminado con el identificador {{ param }}",
+      "delete": {
+        "question": "¿Seguro que quiere eliminar Game Player {{ id }}?"
+      },
+      "detail": {
+        "title": "Game Player"
+      },
+      "id": "ID",
+      "version": "Version",
+      "role": "Role",
+      "ready": "Ready",
+      "gameInst": "Game Inst",
+      "player": "Player",
+      "help": {
+        "role": "assigned in Lobby",
+        "ready": "ack&#39;d version; initial -1"
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "lobbyApp": {
+    "accountInfo": {
+      "home": {
+        "title": "Account Infos",
+        "refreshListLabel": "Refrescar lista",
+        "createLabel": "Crear nuevo Account Info",
+        "createOrEditLabel": "Crear o editar Account Info",
+        "notFound": "Ningún Account Infos encontrado"
+      },
+      "created": "Un nuevo Account Info ha sido creado con el identificador {{ param }}",
+      "updated": "Un Account Info ha sido actualizado con el identificador {{ param }}",
+      "deleted": "Un Account Info ha sido eliminado con el identificador {{ param }}",
+      "delete": {
+        "question": "¿Seguro que quiere eliminar Account Info {{ id }}?"
+      },
+      "detail": {
+        "title": "Account Info"
+      },
+      "id": "ID",
+      "version": "Version",
+      "type": "Type",
+      "user": "User"
+    }
+  }
+}

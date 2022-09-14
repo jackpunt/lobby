@@ -1,0 +1,63 @@
+{
+  "applications": ["lobby"],
+  "changelogDate": "20220809214618",
+  "dto": "mapstruct",
+  "embedded": false,
+  "entityTableName": "game_class",
+  "fields": [
+    {
+      "fieldName": "version",
+      "fieldType": "Integer",
+      "options": {
+        "version": true
+      }
+    },
+    {
+      "fieldName": "name",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength", "required"],
+      "fieldValidateRulesMaxlength": "45",
+      "javadoc": "a unique name for this GameClass"
+    },
+    {
+      "fieldName": "revision",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength"],
+      "fieldValidateRulesMaxlength": "24",
+      "javadoc": "major.minor.patch.TYPE [semver]"
+    },
+    {
+      "fieldName": "launcherPath",
+      "fieldType": "String",
+      "javadoc": "jar-path ! fqcn.of.launcher\\nURL=getenv(“GAMEBASE”)+path/to/release.jar ! fqcn.launcher"
+    },
+    {
+      "fieldName": "gamePath",
+      "fieldType": "String",
+      "javadoc": "jar-path ! fqcn.of.game\\nURL=getenv(“GAMEBASE”)+path/to/release.jar ! pkg.main"
+    },
+    {
+      "fieldName": "docsPath",
+      "fieldType": "String",
+      "javadoc": "doc-path/to/index.html\\nURL=getenv(“GAMEBASE”)+path/to/release.jar ! doc/path/index.html"
+    },
+    {
+      "fieldName": "propNames",
+      "fieldType": "String",
+      "javadoc": "a comma-separated string of property names for this GameClass\\nonly these prop_names can appear in the game_props.json associated with this game_class"
+    },
+    {
+      "fieldName": "updated",
+      "fieldType": "Instant",
+      "fieldValidateRules": ["required"]
+    }
+  ],
+  "fluentMethods": true,
+  "javadoc": "Which Game engine/jar to play.",
+  "jpaMetamodelFiltering": false,
+  "name": "GameClass",
+  "pagination": "no",
+  "readOnly": false,
+  "relationships": [],
+  "service": "serviceClass"
+}

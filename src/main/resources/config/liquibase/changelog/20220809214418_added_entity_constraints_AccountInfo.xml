@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!--
+        Added the constraints for entity AccountInfo.
+    -->
+    <changeSet id="20220809214418-2" author="jhipster">
+
+        <addForeignKeyConstraint baseColumnNames="id"
+                                 baseTableName="account_info"
+                                 constraintName="fk_account_info__user_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"/>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,108 @@
+<div>
+  <h2 id="page-heading" data-cy="PlayerHeading">
+    <span jhiTranslate="lobbyApp.player.home.title">Players</span>
+
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-info me-2" (click)="load()" [disabled]="isLoading">
+        <fa-icon icon="sync" [spin]="isLoading"></fa-icon>
+        <span jhiTranslate="lobbyApp.player.home.refreshListLabel">Refresh list</span>
+      </button>
+
+      <button
+        id="jh-create-entity"
+        data-cy="entityCreateButton"
+        class="btn btn-primary jh-create-entity create-player"
+        [routerLink]="['/player/new']"
+      >
+        <fa-icon icon="plus"></fa-icon>
+        <span jhiTranslate="lobbyApp.player.home.createLabel"> Create a new Player </span>
+      </button>
+    </div>
+  </h2>
+
+  <jhi-alert-error></jhi-alert-error>
+
+  <jhi-alert></jhi-alert>
+
+  <div class="alert alert-warning" id="no-result" *ngIf="players?.length === 0">
+    <span jhiTranslate="lobbyApp.player.home.notFound">No Players found</span>
+  </div>
+
+  <div class="table-responsive" id="entities" *ngIf="players && players.length > 0">
+    <table class="table table-striped" aria-describedby="page-heading">
+      <thead>
+        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="navigateToWithComponentValues()">
+          <th scope="col" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="version">
+            <span jhiTranslate="lobbyApp.player.version">Version</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="name"><span jhiTranslate="lobbyApp.player.name">Name</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="rank"><span jhiTranslate="lobbyApp.player.rank">Rank</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="score"><span jhiTranslate="lobbyApp.player.score">Score</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="scoreTime">
+            <span jhiTranslate="lobbyApp.player.scoreTime">Score Time</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="rankTime">
+            <span jhiTranslate="lobbyApp.player.rankTime">Rank Time</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="displayClient">
+            <span jhiTranslate="lobbyApp.player.displayClient">Display Client</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="gameClass.id">
+            <span jhiTranslate="lobbyApp.player.gameClass">Game Class</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="mainJar.id">
+            <span jhiTranslate="lobbyApp.player.mainJar">Main Jar</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="user.id"><span jhiTranslate="lobbyApp.player.user">User</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let player of players; trackBy: trackId" data-cy="entityTable">
+          <td>
+            <a [routerLink]="['/player', player.id, 'view']">{{ player.id }}</a>
+          </td>
+          <td>{{ player.version }}</td>
+          <td>{{ player.name }}</td>
+          <td>{{ player.rank }}</td>
+          <td>{{ player.score }}</td>
+          <td>{{ player.scoreTime | formatMediumDatetime }}</td>
+          <td>{{ player.rankTime | formatMediumDatetime }}</td>
+          <td>{{ player.displayClient }}</td>
+          <td>
+            <div *ngIf="player.gameClass">
+              <a [routerLink]="['/game-class', player.gameClass.id, 'view']">{{ player.gameClass?.id }}</a>
+            </div>
+          </td>
+          <td>
+            <div *ngIf="player.mainJar">
+              <a [routerLink]="['/asset', player.mainJar.id, 'view']">{{ player.mainJar?.id }}</a>
+            </div>
+          </td>
+          <td>
+            {{ player.user?.id }}
+          </td>
+          <td class="text-end">
+            <div class="btn-group">
+              <button type="submit" [routerLink]="['/player', player.id, 'view']" class="btn btn-info btn-sm" data-cy="entityDetailsButton">
+                <fa-icon icon="eye"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+              </button>
+
+              <button type="submit" [routerLink]="['/player', player.id, 'edit']" class="btn btn-primary btn-sm" data-cy="entityEditButton">
+                <fa-icon icon="pencil-alt"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+              </button>
+
+              <button type="submit" (click)="delete(player)" class="btn btn-danger btn-sm" data-cy="entityDeleteButton">
+                <fa-icon icon="times"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
