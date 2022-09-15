@@ -1,3 +1,4 @@
+// jhipster jdl ${this-file} -skip-fake-data
 application {
   config {
     applicationType monolith
