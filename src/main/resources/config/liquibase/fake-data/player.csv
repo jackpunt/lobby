@@ -1,11 +1,8 @@
-id;version;name;jhi_rank;score;score_time;rank_time;display_client
-1;73924;e-commerce France;8488;87629;2022-08-09T02:07:15;2022-08-08T22:45:31;engage
-2;33167;online Cyprus Supervisor;87167;50139;2022-08-09T21:32:35;2022-08-09T16:34:22;Lock cross-media scalable
-3;78158;Devolved;15029;73287;2022-08-09T08:14:24;2022-08-09T18:23:07;Louisiana generation
-4;71432;invoice user-centric Garden;39402;19398;2022-08-08T22:31:07;2022-08-09T12:22:12;real-time matrices
-5;7990;Frozen;9663;64148;2022-08-09T03:28:12;2022-08-09T03:34:59;generation
-6;68953;Rubber Sausages indexing;15066;83418;2022-08-09T13:49:19;2022-08-09T12:16:02;Corporate navigating out-of-the-box
-7;45845;Viaduct maroon scale;43479;77035;2022-08-08T22:37:51;2022-08-09T13:41:05;hybrid backing Czech
-8;39962;Moroccan Home Buckinghamshire;51163;7207;2022-08-09T02:18:07;2022-08-09T14:59:52;black Soft payment
-9;4359;networks hard;20428;8709;2022-08-09T19:04:54;2022-08-08T22:31:43;XML Colon National
-10;362;neural Cliff Texas;25431;79368;2022-08-09T21:29:19;2022-08-09T14:04:02;quantify
+id,version,name,jhi_rank,score,score_time,rank_time,display_client,game_class_id,main_jar_id,user_id
+1,2,Player1s,3,0,"2010-11-12 00:00:00.000000","2010-11-12 00:00:00.000000",https://game4.thegraid.com:8445/map,1,1,2
+2,0,Player2s,2,0,NULL,NULL,https://game4.thegraid.com:8445/map,1,2,3
+3,0,Player2x,1,0,NULL,NULL,https://game4.thegraid.com:8445/map,2,2,3
+4,0,Player2b,1,500,"2010-12-01 00:00:00.000000","2010-12-01 00:00:00.000000",https://game4.thegraid.com:8445/map,1,2,3
+5,0,A2RiskPlayer,1,0,NULL,NULL,airisk/riskPlayer.html,4,5,3
+6,0,ANewHexPlayer,15,0,NULL,NULL,gammaFlex/GammaFlex.html,1,2,3
+7,0,TempPlayer,16,0,NULL,NULL,gammaFlex/GammaFlex.html,1,1,2

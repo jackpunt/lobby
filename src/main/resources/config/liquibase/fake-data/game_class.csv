@@ -1,11 +1,5 @@
-id;version;name;revision;launcher_path;game_path;docs_path;prop_names;updated
-1;61389;deposit program empower;mission-critical extrane;Virginia Tools JBOD;Credit;Operations Horizontal;XSS web-readiness;2022-08-08T23:33:29
-2;89073;AI systematic;Programmable azure conne;Customer withdrawal Soap;Home success AI;Algeria Supervisor navigating;partnerships Music;2022-08-09T06:44:56
-3;59806;COM Shoes hack;e-services;bypass Cambridgeshire;Administrator Borders;Tuna methodologies Buckinghamshire;dynamic Refined asynchronous;2022-08-09T16:02:09
-4;72953;Garden moderator Unbranded;Licensed Alabama;system Saint;capability capability;Frozen;copying;2022-08-09T18:00:34
-5;43411;Metal Computer Ergonomic;Romania architecture SMT;payment reinvent Savings;Gibraltar regional;Solutions;efficient transparent Libyan;2022-08-09T15:34:14
-6;8275;invoice demand-driven incubate;Rubber help-desk;overriding;withdrawal;Wyoming THX parse;New fuchsia;2022-08-09T04:47:16
-7;50495;e-business;deposit;user Kazakhstan infrastructures;Dynamic;pixel Awesome Ecuador;Wyoming invoice Integration;2022-08-09T09:30:00
-8;32793;e-business;Bike Grocery RAM;metrics;Washington connect Frozen;systems;USB;2022-08-09T14:50:29
-9;19367;Awesome;haptic Towels;Organized;Unbranded;Hampshire;Engineer;2022-08-09T01:40:29
-10;68077;Pre-emptive;Specialist input;Spur;web Chicken;copying olive Sports;Auto primary metrics;2022-08-08T23:00:08
+id,version,name,revision,launcher_path,game_path,docs_path,prop_names,updated
+1,0,Hexagen0a,0.0.0.A,gamma/gamma-main/1.0-SNAPSHOT/gamma-main-1.0-SNAPSHOT.jar!gamma.main.GammaLauncher,gamma/gamma-si/1.0-SNAPSHOT/gamma-si-1.0-SNAPSHOT.jar!gamma.games.hexagen.Hexagen,/docs/for/Hexagen0a,NULL,"2017-02-26 12:01:46.000000"
+2,3,Hexagen0b,0.0.0.B,gamma/gamma-main/1.0-SNAPSHOT/gamma-main-1.0-SNAPSHOT.jar!gamma.main.GammaLauncher,gamma/gamma-si/1.0-SNAPSHOT/gamma-si-1.0-SNAPSHOT.jar!gamma.games.hexagen.Hexagen,/docs/for/Hexagen0b,NULL,"2017-02-26 12:01:46.000000"
+3,1,HexagenJar0a,0.0.0.A,gamma/gamma-main/1.0-SNAPSHOT/gamma-main-1.0-SNAPSHOT.jar!gamma.main.GammaLauncher,gamma/gamma-si/1.0-SNAPSHOT/gamma-si-1.0-SNAPSHOT.jar!gamma.games.hexagen.Hexagen,docs/Hexagen,NULL,"2017-02-26 12:01:46.000000"
+4,0,AiRisk,0.0.0.A,file:/c:/Data/Programs/java/airisk/target/classes!com.thegraid.AiRiskLauncher,file:/c:/Data/Programs/java/airisk/target/classes!com.thegraid.AiRisk,docs/AiRisk,self_attack,"2017-01-29 12:12:49.000000"

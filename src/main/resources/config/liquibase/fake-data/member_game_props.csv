@@ -1,11 +1,1 @@
-id;version;seed;map_name;map_size;npc_count;json_props;config_name
-1;99440;25423;didactic Inverse;96212;96224;Clothing Tugrik virtual;Handmade
-2;21532;2278;Cotton exploit Chief;35374;55915;Chicken Accountability connect;azure
-3;97339;45412;Outdoors deploy orchestrate;76676;62952;1080p Technician;Credit
-4;76552;25795;JBOD South;19305;76807;Technician homogeneous cross-media;Hawaii Implementation
-5;67950;63937;Cambridgeshire hack;44580;98475;interactive panel Account;Books optical Tuvalu
-6;85439;28403;24/365 maximize engage;38128;63800;Chips Belgium synthesizing;Checking mint Fully-configurable
-7;10185;63295;e-business;40455;33843;array;next
-8;17391;66279;programming Idaho View;14782;15480;cross-platform;throughput programming
-9;5836;63139;application;68888;60461;Tanzania killer;payment generating
-10;77492;37877;Fresh synthesizing;9962;39262;Awesome Malta;expedite indigo Angola
+id,version,seed,map_name,map_size,npc_count,json_props,config_name,user_id,game_class_id

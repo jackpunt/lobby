@@ -46,7 +46,7 @@ management:
           ]
   endpoint:
     health:
-      show-details: when_authorized
+      show-details: WHEN_AUTHORIZED
       roles: 'ROLE_ADMIN'
       probes:
         enabled: true
@@ -136,7 +136,7 @@ spring:
     allow-bean-definition-overriding: true
   mvc:
     pathmatch:
-      matching-strategy: ant_path_matcher
+      matching-strategy: ANT_PATH_MATCHER
   task:
     execution:
       thread-name-prefix: lobby-task-
@@ -211,3 +211,5 @@ jhipster:
 # ===================================================================
 
 # application:
+gamma:
+  gameLaunchUrl: 'https://game5.thegraid.com:8445/gamma-web/launcher/results/'

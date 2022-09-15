@@ -1,11 +1,6 @@
-id;version;name;main;auto;path;include
-1;138;Markets Research;false;true;withdrawal models multimedia;Internal Mouse
-2;61033;Isle;true;false;regional Shoes;optical functionalities Ohio
-3;96638;Fresh;false;false;Licensed Dynamic;Cheese
-4;8825;clicks-and-mortar;false;true;Customer-focused Loan flexibility;Officer Dale
-5;25204;access Toys XSS;false;true;Union haptic;generation Music Wooden
-6;53391;capacitor neutral Division;false;true;auxiliary Cambridgeshire Borders;Soft Wooden
-7;13672;quantifying;true;true;synthesizing;AI parallelism
-8;93684;Manager;true;true;Direct bandwidth;Fresh Intelligent
-9;29068;Path;true;false;Buckinghamshire enable Facilitator;drive Markets orchid
-10;50035;adapter Concrete Savings;true;true;Lek extensible harness;index Plastic back-end
+id,version,name,main,auto,path,include,user_id
+1,0,FooPlayer1,1,0,jpeck/local/userAI/1.0-SNAPSHOT/userAI-1.0-SNAPSHOT.jar!userAI.player1.FooPlayer,NULL,2
+2,0,FooPlayer2,1,0,jpeck/local/userAI/1.0-SNAPSHOT/userAI-1.0-SNAPSHOT.jar!userAI.player2.FooPlayer2,NULL,3
+3,0,NormalAssetForMember1,1,0,1/fooPlayer-1.0.0.RELEASE.jar!userAI.player1.FooPlayer,NULL,2
+4,0,HexGaia-DeleteThisRecord,0,0,4/hexagen-1.0.0.RELEASE.jar!gamma.player.Simple_Gaia,NULL,4
+5,0,RiskPlayer2,1,1,2/riskPlayer-1.0.0.RC1.jar!userAI.player2.risk.RiskPlayer2,NULL,3
