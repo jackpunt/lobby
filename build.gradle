@@ -27,7 +27,7 @@ plugins {
 group = "com.thegraid.lobby"
 version = "0.0.1-SNAPSHOT"
 
-description = ""
+description = "jhipster Lobby (REST & Ng) and Domain (MySQL)"
 
 sourceCompatibility=11
 targetCompatibility=11
@@ -129,7 +129,7 @@ liquibase {
             driver "com.mysql.cj.jdbc.Driver"
             url "jdbc:mysql://localhost:3306/lobby"
             username "root"
-            password ""
+            password "Spw4.sql"
             changeLogFile "src/main/resources/config/liquibase/master.xml"
             defaultSchemaName "lobby"
             logLevel "debug"
@@ -139,7 +139,7 @@ liquibase {
             driver "com.mysql.cj.jdbc.Driver"
             url "jdbc:mysql://localhost:3306/lobby"
             username "root"
-            password ""
+            password "Spw4.sql"
             changeLogFile project.ext.diffChangelogFile
             referenceUrl "hibernate:spring:com.thegraid.lobby.domain?dialect=org.hibernate.dialect.MySQL8Dialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"
             defaultSchemaName "lobby"
@@ -182,6 +182,15 @@ repositories {
     // mavenLocal()
     mavenCentral()
     //jhipster-needle-gradle-repositories - JHipster will add additional repositories
+    // .m2/settings.xml --> file:///Users/Jpeck/Data/Programs/mavenRepo
+    mavenLocal () {
+        content {
+            // this repository *only* contains artifacts with group "gamma" & "jpeck.local"
+            includeGroup "com.thegraid.gamma"
+            includeGroup "gamma"
+            includeGroup "jpeck.local"          // for "userAI", "generic", "util"?
+        }
+    }
 }
 
 dependencies {
@@ -230,6 +239,14 @@ dependencies {
     testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:${archunitJunit5Version}"
     implementation "org.zalando:problem-spring-web"
     implementation "org.springframework.boot:spring-boot-starter-undertow"
+    implementation "io.jsonwebtoken:jjwt-api"
+    if (!project.hasProperty("gae")) {
+    runtimeOnly "io.jsonwebtoken:jjwt-impl"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson"
+    } else {
+    implementation "io.jsonwebtoken:jjwt-impl"
+    implementation "io.jsonwebtoken:jjwt-jackson"
+    }
     implementation "org.springframework.cloud:spring-cloud-starter-bootstrap"
     implementation "org.springframework.security:spring-security-data"
     implementation "io.micrometer:micrometer-registry-prometheus"
@@ -237,6 +254,7 @@ dependencies {
     liquibaseRuntime sourceSets.main.compileClasspath
     liquibaseRuntime "org.liquibase.ext:liquibase-hibernate5:${liquibaseHibernate5Version}"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
+    implementation 'gamma:gamma-main:0.1.1-SNAPSHOT'
 }
 
 if (project.hasProperty("gae")) {
