@@ -64,7 +64,7 @@ public class TicketService {
     private byte[] concatBytes(byte[] bytes1, byte[] bytes2) {
         int len = bytes1.length + bytes2.length;
         byte[] all_bytes = Arrays.copyOf(bytes1, len);
-        System.arraycopy(bytes2, 0, all_bytes, len, bytes2.length);
+        System.arraycopy(bytes2, 0, all_bytes, bytes1.length, bytes2.length);
         return all_bytes;
     }
 
@@ -115,25 +115,26 @@ public class TicketService {
         return true;
     }
 
-    /** suitable for using JSESSIONID as a per-user/session Salt
-     * @param uuids UUID as string of digits
-     * @return Long hash of the bits of uuids
+    /** suitable for using a random String (JSESSIONID) as a per-user/session Salt
+     * @param jsessionid an unguessable String
+     * @return Long hash of derived from jesssionid
      */
-    public Long getSaltFromUUID(String uuids) {
-        String uuidss =
-            uuids.substring(0, 7) +
-            "-" +
-            uuids.substring(8, 11) +
-            "-" +
-            uuids.substring(12, 15) +
-            "-" +
-            uuids.substring(16, 19) +
-            "-" +
-            uuids.substring(20);
-        UUID uuid = UUID.fromString(uuidss); // all this to convert string to pair of long
-        long uuid_salt = (uuid.getMostSignificantBits() ^ uuid.getLeastSignificantBits());
-        log.trace("getSaltFomrUUID: {} --> {}", uuids, uuid_salt);
-        return (Long) uuid_salt;
+    public Long getSaltFromJSession(String jsessionid) {
+        String s1 = jsessionid.substring(0, jsessionid.length() / 2 - 1);
+        String s2 = jsessionid.substring(jsessionid.length() / 2);
+        int h1 = s1.hashCode();
+        int h2 = s2.hashCode();
+        String lstr = Integer.toUnsignedString(h1) + Integer.toUnsignedString(h2);
+        Long salt = null;
+        while (salt == null) {
+            try {
+                salt = Long.parseUnsignedLong(lstr);
+            } catch (NumberFormatException ex) {
+                lstr = lstr.substring(1);
+            }
+        }
+        log.trace("getSaltFromJSession: {} --> {}", jsessionid, salt);
+        return salt;
     }
 
     /** Validate Ticket using JSESSIONID as key. */
@@ -153,12 +154,11 @@ public class TicketService {
          * @param username  include user.loginid
          * @param validTime deadlne for ticket to be valid
          * @param gpid      the long id (not null, not 0L)
-         * @param uuids     String representing a UUID that is shared with the
-         *                  GameServer.
+         * @param jsessions [unguessable] String that is shared with the GameServer.
          * @return Ticket signed with uuids
          */
-        public String getTicket(String username, Long validTime, Long gpid, String uuids) {
-            return getTicket(username, validTime, gpid, getSaltFromUUID(uuids));
+        public String getTicket(String username, Long validTime, Long gpid, String jsessions) {
+            return getTicket(username, validTime, gpid, getSaltFromJSession(jsessions));
         }
 
         // export this if there is some other salt to share with the validating side

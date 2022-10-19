@@ -20,6 +20,7 @@ logging:
     tech.jhipster: DEBUG
     org.hibernate.SQL: WARN
     com.thegraid.gamma: DEBUG
+    javax.management: WARN
 
 spring:
   devtools:
@@ -29,6 +30,7 @@ spring:
     livereload:
       enabled: false # we use Webpack dev server + BrowserSync for livereload
   jackson:
+    default-property-inclusion: non-null
     serialization:
       indent-output: true
   datasource:
@@ -80,12 +82,12 @@ server:
   ssl.key-alias: lobby2.thegraid.com
   # Tell Spring Security (if used) to require requests over HTTPS
   # security.require-ssl: true
-  # The format used for the keystore  (TODO: PKCS12)
+  # The format used for the keystore
   ssl.key-store-type: PKCS12
   # The path to the keystore containing the certificate
   ssl.key-store: /Users/jpeck/keys/keystore.p12
   # The password used to generate the certificate
-  ssl.key-store-password: changeit
+  ssl.key-store-password: ${KEYPASS}
   ssl.ciphers: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
   ssl.enabled-protocols: TLSv1.2
   http2.enabled: true

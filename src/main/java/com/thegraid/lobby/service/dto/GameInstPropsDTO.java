@@ -1,5 +1,6 @@
 package com.thegraid.lobby.service.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serializable;
 import java.time.Instant;
@@ -46,6 +47,7 @@ public class GameInstPropsDTO implements Serializable {
     @NotNull
     private Instant updated;
 
+    @JsonIgnoreProperties(value = { "playerA", "playerB", "gameClass", "props" }, allowSetters = true)
     private GameInstDTO gameInst;
 
     public Long getId() {

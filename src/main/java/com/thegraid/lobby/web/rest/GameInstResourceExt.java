@@ -1,5 +1,10 @@
 package com.thegraid.lobby.web.rest;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.thegraid.lobby.auth.NotGameException;
 import com.thegraid.lobby.auth.TicketService.GameTicketService;
 import com.thegraid.lobby.config.ApplicationProperties;
@@ -12,28 +17,30 @@ import com.thegraid.lobby.domain.User;
 import com.thegraid.lobby.repository.GameInstPropsRepository;
 import com.thegraid.lobby.repository.GameInstRepository;
 import com.thegraid.lobby.repository.GamePlayerRepositoryExt;
+import com.thegraid.lobby.repository.UserRepository;
 import com.thegraid.lobby.security.AuthoritiesConstants;
 import com.thegraid.lobby.service.GameInstService;
 import com.thegraid.lobby.service.UserService;
 import com.thegraid.lobby.service.dto.GameInstDTO;
-import gamma.main.GameLauncher;
-import gamma.main.Launcher;
-import gamma.main.Launcher.Game;
-import gamma.main.Launcher.GameResults;
-import gamma.main.Launcher.LaunchResults;
+import com.thegraid.share.LobbyLauncher.GameResults;
+import com.thegraid.share.LobbyLauncher.LaunchInfo;
+import com.thegraid.share.LobbyLauncher.LaunchResults;
+import com.thegraid.share.domain.intf.IGameInstDTO;
+import com.thegraid.share.domain.intf.IGameInstPropsDTO;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import liquibase.pro.packaged.g;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +57,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @Primary
@@ -61,81 +69,103 @@ public class GameInstResourceExt extends GameInstResource {
 
     static final Logger log = LoggerFactory.getLogger(GameInstResource.class);
 
-    // using this local class until we build something to replace the InProcLauncher
-    // and fix the protocol between gammaDS.GameInstController and gamma-web.GameLauncher
-    // and fix the protocol between gammaJH.GameInstResourceExt and gamma-web-new.GameLauncher
-    @Component("xgameLauncher")
-    public static class NullGameLauncher implements GameLauncher.InProc {
+    /** originally an RMI interface, now a REST inteface */
+    public static interface GameLauncher {
+        /**
+         * @param giid
+         * @param gameInst if available, else obtained by findById(giid)
+         */
+        LaunchResults launchPost(LaunchInfo launchInfo);
 
-        @Override
-        public Game getLaunchedGame(Long giid) {
-            return null;
-        }
+        GameResults abortIfRunning(Long giid);
 
-        @Override
-        public void finished(GameResults results) {}
+        void finished(GameResults results);
 
-        @Override
-        public LaunchResults launch(Long giid) {
-            return null;
-        }
-    }
+        // using this local class until we build something to replace the InProcLauncher
+        // plays the role of AbstractGameLauncher...
+        @Component("xgameLauncher")
+        public static class Null implements GameLauncher {
 
-    /**
-     * launch game using HTTP to gamma-web...LaunchService.
-     */
-    @Component("gameLauncher")
-    public static class HttpGameLauncher implements GameLauncher.InProc {
+            // TODO: track games that are launched but not finished, so we can abort them.
 
-        // TODO: do the right thing instead of ".InProc"
-        // To be a Proxy to GameLauncher running on gamma[567].thegraid.com
-        // using HTTP-REST:
-        // Send PUT to start a new game
-        // POST to 'start/terminate'? no real need from here. (client has ClockCtrl)
-        // Send GET to get status
-        // Send DEL to terminate?
-        // Send message/request to game Server(giid) get actual status.
+            @Override
+            public LaunchResults launchPost(LaunchInfo launchInfo) {
+                log.warn("NullGameLauncher: Not launching " + launchInfo.gameInst.getId());
+                return null;
+            }
 
-        @Value("${gamma.gameLaunchUrl}")
-        private String gameLaunchUrl;
+            @Override
+            public GameResults abortIfRunning(Long giid) {
+                log.warn("NullGameLauncher: Not aborting " + giid);
+                return null;
+            }
 
-        @Autowired
-        private ApplicationProperties props;
-
-        @Override
-        public Game getLaunchedGame(Long giid) {
-            // GameDS: abort, pause, resume, setClockRate
-            // Game: initialize, props, playerInfo
-            return null; // If Game is 'launched' return handle to control it
-        }
-
-        @Override
-        public void finished(GameResults results) {
-            // properly done, this would notify the gameserver to kill the game
-            // So: gamma-web Launcher would also implement InProc...
-            // should provoke GameResults, with status to indicate invalid scores/ticks
+            @Override
+            public void finished(GameResults results) {
+                // TODO parse results and push to database.
+                log.warn("NullGameLauncher: Not recording results " + (results != null ? results.getId() : ""));
+            }
         }
 
         /**
-         * GammaDS stub that invokes launcher implementation.
-         * Using HTTP/REST invocation (for load-balancing)
-         * @return results {HostURL, StartTime}
+         * launch game using HTTP to gamma-web...LaunchService.
          */
-        @Override
-        public LaunchResults launch(Long giid) {
-            // https://spring.io/guides/gs/consuming-rest/
-            // http://www.baeldung.com/rest-template
-            RestTemplate rest = new RestTemplate();
-            log.debug("launch: launchURL={}", gameLaunchUrl);
-            //ResponseEntity<String> response = rest.getForEntity(launchURL + giid, String.class);
-            LaunchResults results = rest.getForObject(gameLaunchUrl + giid, LaunchResults.Impl.class);
-            return results;
+        @Component("gameLauncher")
+        public static class Rest extends Null implements GameLauncher {
+
+            private GameInstResourceExt gameInstResourceExt;
+
+            // Rest(GameInstResourceExt gameInstResourceExt) {
+            //     this.gameInstResourceExt = gameInstResourceExt; // circular dependency
+            // }
+
+            // To be a Proxy to GameLauncher running on gamma[567].thegraid.com
+            // using HTTP-REST:
+            // Send PUT to start a new game
+            // POST to 'start/terminate'? no real need from here. (client has ClockCtrl)
+            // Send GET to get status
+            // Send DEL to terminate?
+            // Send message/request to game Server(giid) get actual status.
+
+            @Value("${gamma.gameLaunchUrl}")
+            private String gameLaunchUrl;
+
+            /**
+             * Stub that invokes launcher implementation.
+             * Using HTTP/REST invocation (for load-balancing)
+             *
+             * @return results {HostURL, StartTime}
+             */
+            @Override
+            public LaunchResults launchPost(LaunchInfo launchInfo) {
+                // https://spring.io/guides/gs/consuming-rest/
+                // https://www.baeldung.com/rest-template
+                RestTemplate rest = new RestTemplate();
+                try {
+                    return rest.postForObject(gameLaunchUrl, launchInfo, LaunchResults.Impl.class);
+                } catch (RestClientException ex) {
+                    log.error("launchPost: FAILED - " + ex.getMessage());
+                }
+                return new LaunchResults.Impl();
+            }
+
+            @Override
+            public GameResults abortIfRunning(Long giid) {
+                log.warn("HttpGameLauncher: Not aborting " + giid); // TODO: a new REST endpoint
+                //finished(new GameResults.Impl(giid)); // with null values...
+                return null;
+            }
+
+            @Override
+            public void finished(GameResults results) {
+                gameInstResourceExt.recordResults(results, null);
+            }
         }
     }
 
     public static class RedirectDTO {
 
-        final String url;
+        public String url;
 
         RedirectDTO(String url) {
             this.url = url;
@@ -168,11 +198,40 @@ public class GameInstResourceExt extends GameInstResource {
         return editPath(role, gameInst.getId());
     }
 
+    // TODO: try use Spring's ObjectMapper.
+    // https://stackoverflow.com/questions/30060006/how-do-i-obtain-the-jackson-objectmapper-in-use-by-spring-4-1
+    // For now, add JavaTimeModule()
+    // https://github.com/FasterXML/jackson-modules-java8/tree/2.14/datetime
+    static ObjectMapper mapper = JsonMapper.builder().addModule(new JavaTimeModule()).build().setDefaultPropertyInclusion(Include.NON_NULL);
+
+    private String jsonify(Object obj) {
+        // https://www.baeldung.com/spring-boot-customize-jackson-objectmapper#1-objectmapper
+        try {
+            return mapper.writeValueAsString(obj);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("JSON conversion failed", e);
+        }
+    }
+
+    private <T> T toType(Object obj, Class<T> clazz) {
+        try {
+            String content = jsonify(obj);
+            return mapper.readValue(content, clazz);
+        } catch (JsonProcessingException ex) {
+            log.error("toType: FAILED - " + ex.getMessage());
+            return null;
+        }
+    }
+
     /** GamePlayer.role value for PlayerA */
     public static final String ROLE_A = "A";
 
     /** GamePlayer.role value for PlayerB */
     public static final String ROLE_B = "B";
+
+    public static String otherRole(String role) {
+        return role == ROLE_A ? ROLE_B : ROLE_A;
+    }
 
     @Autowired
     public GameLauncher gameLauncher;
@@ -186,6 +245,8 @@ public class GameInstResourceExt extends GameInstResource {
     @Autowired
     private GameTicketService gameTicketService;
 
+    private final UserRepository userRepository;
+
     private final GameInstService gameInstService;
 
     private final GameInstRepository gameInstRepository;
@@ -196,33 +257,37 @@ public class GameInstResourceExt extends GameInstResource {
 
     // Constructor
     public GameInstResourceExt(
+        UserRepository userRepository,
         GameInstService gameInstService,
         GameInstRepository gameInstRepository,
         GameInstPropsRepository gameInstPropsRepository,
         GamePlayerRepositoryExt gamePlayerRepository
     ) {
         super(gameInstService, gameInstRepository);
+        this.userRepository = userRepository;
         this.gameInstService = gameInstService;
         this.gameInstRepository = gameInstRepository;
         this.gameInstPropsRepository = gameInstPropsRepository;
         this.gamePlayerRepository = gamePlayerRepository;
     }
 
-    public GamePlayer findGamePlayerInRole(GameInst gameInst, String role) {
+    public Map<String, GamePlayer> findGamePlayerByRole(GameInst gameInst) {
         // GameInst & Player each have a Set of GamePlayers
-        if (role == null) throw new IllegalArgumentException("Invalid role: " + role);
         List<GamePlayer> gamePlayers = gamePlayerRepository.getGamePlayers(gameInst);
         if (gamePlayers.isEmpty()) return null;
+        Map<String, GamePlayer> rv = new HashMap<String, GamePlayer>();
         for (GamePlayer gp : gamePlayers) {
-            if (role.equals(gp.getRole())) return gp;
+            rv.put(gp.getRole(), gp);
         }
-        return null;
+        return rv;
     }
 
     /** used for 'testing' with resetGiid
      * @return */
     private Authentication loginAs(User member) {
-        Set<Authority> auths = member.getAuthorities();
+        Optional<User> optUserWithAuths = userRepository.findOneWithAuthoritiesByEmailIgnoreCase(member.getEmail());
+        User user = optUserWithAuths.get();
+        Set<Authority> auths = user.getAuthorities();
         // confirm that given member has ROLE_USER
         if (
             !auths
@@ -246,18 +311,23 @@ public class GameInstResourceExt extends GameInstResource {
 
     private void resetGame(GameInst gameInst) {
         Long giid = gameInst.getId();
-        GameLauncher.InProc gameLauncher2 = (GameLauncher.InProc) gameLauncher;
-        Launcher.Game game = gameLauncher2.getLaunchedGame(giid);
-        if (game != null) game.abort("resetGiid");
-        gameLauncher2.finished(new Launcher.GameResults.Impl(giid)); // with null values...
+        gameLauncher.abortIfRunning(giid);
+        GameResults reset = new GameResults.Impl(giid); // true, null...
         gameInst.setStarted(null);
-        // could make: setResults(finished, scoreA, scoreB, ticks)
-        gameInst.setFinished(null);
-        gameInst.setScoreA(null);
-        gameInst.setScoreB(null);
-        gameInst.setTicks(null);
-        gameInstRepository.save(gameInst); // reset fields in database.
+        recordResults(reset, gameInst);
         // Now: launchGameInstIfReady()
+    }
+
+    /** suitable for callback when Launche returns GameResults */
+    private void recordResults(GameResults results, GameInst gameInst) {
+        if (gameInst == null) {
+            gameInst = gameInstRepository.findById(results.getId()).get();
+        }
+        gameInst.setFinished(results.getFinished());
+        gameInst.setScoreA(results.getScoreA());
+        gameInst.setScoreB(results.getScoreB());
+        gameInst.setTicks(results.getTicks());
+        gameInstRepository.save(gameInst); // reset fields in database.
     }
 
     @RequestMapping(value = "redit/{role:[AB]}/{giid}") // TODO: redit/{giid}/{rold:[AB]}
@@ -266,16 +336,19 @@ public class GameInstResourceExt extends GameInstResource {
         Optional<GameInst> gameInstOpt = gameInstRepository.findById(giid);
         if (gameInstOpt.isEmpty()) throw new NotGameException("Invalid gameInst id: " + giid);
         // resetGiid ONLY works when using the "InProc" GameLauncher!
-        if (!(gameLauncher instanceof GameLauncher.InProc)) throw new IllegalStateException(
-            "Not configured for resetGiid: " + gameLauncher
-        );
+        if (!(gameLauncher instanceof GameLauncher.Rest)) {
+            throw new IllegalStateException("Not configured for resetGiid: " + gameLauncher);
+        } else {
+            ((GameLauncher.Rest) gameLauncher).gameInstResourceExt = this;
+        }
         GameInst gameInst = gameInstOpt.get();
+        Map<String, GamePlayer> gamePlayers = findGamePlayerByRole(gameInst);
         // find User in given role:
-        GamePlayer gamePlayer = findGamePlayerInRole(gameInst, role); // Assume URL identifies Player; spoof
-        Player player = gamePlayer.getPlayer();
+        GamePlayer gamePlayer1 = gamePlayers.get(role);
+        Player player = gamePlayer1.getPlayer();
         User user = player.getUser();
         //User user = userService.getUserWithAuthorities().get();  // if User was actually logged-in
-        log.debug("Player: {}, User: {}", player, user);
+        log.debug("\nPlayer: {}, \nUser: {}", player, user);
         Principal principal = (Principal) loginAs(user);
         if (principal == null) {
             throw new IllegalStateException("Could not login as " + user.getLogin());
@@ -283,16 +356,13 @@ public class GameInstResourceExt extends GameInstResource {
         log.debug("Principal requesting reset: {} of gameInst= {}", principal.getName(), gameInst);
 
         resetGame(gameInst);
-        String otherRole = (role == ROLE_A) ? ROLE_B : ROLE_A;
-        GamePlayer otherPlayer = findGamePlayerInRole(gameInst, otherRole);
-        GameInstProps gameProps = gameInstPropsRepository.getReferenceById(gameInst.getId());
 
-        String launchUrl = props.gamma.gameLaunchUrl; // where the launcher is listening
+        String launchUrl = props.gamma.gameLaunchUrl; // where the launcher is listening (https:.../launcher)
         String hostUrl = gameInst.getHostUrl(); // "https://game5.gamma.com:8445/launcher/GameControl/giid"
-        String newUrl = replaceHostInUrl(hostUrl, launchUrl);
+        String newUrl = replaceHostInUrl(hostUrl, launchUrl); // talk to the REST endpoint on given host
         log.info("temporary setLaunchUrl: {}", newUrl);
         props.gamma.gameLaunchUrl = newUrl;
-        String url = launchGame(gamePlayer, otherPlayer, gameProps, request);
+        String url = launchGame(gamePlayers, role, request);
         props.gamma.gameLaunchUrl = launchUrl; // reset to original
 
         RedirectDTO redirect = new RedirectDTO(url);
@@ -301,7 +371,7 @@ public class GameInstResourceExt extends GameInstResource {
         //String format = "redirect:%1$s";
         // format = "<body>redirect:<a href=\"%1$s\">%1$s</a></body>"; // set
         // @ResponseBody above
-        // url ="http://www.google.com";
+        // url ="https://www.google.com";
         // url = editUrl(role, gameInst);
         //String rv = String.format(format, url);
         //log.warn("rv = {}", rv);
@@ -332,42 +402,55 @@ public class GameInstResourceExt extends GameInstResource {
      * @param request
      * @return the redirect url (success:login or fail:edit)
      */
-    private String launchGame(GamePlayer gamePlayer1, GamePlayer gamePlayer2, GameInstProps gameProps, HttpServletRequest request) {
-        GameInst gameInst = gamePlayer1.getGameInst();
+    private String launchGame(Map<String, GamePlayer> gamePlayers, String role, HttpServletRequest request) {
+        GameInst gameInst = gamePlayers.get(ROLE_A).getGameInst(); // each GamePlayer has same GameInst
+        Long giid = gameInst.getId();
+
         String base = request.getRequestURL().toString(); //baseURL(request);
         log.warn("launchGame: {} from {}", gameInst, base);
+        String url1 = loginUrl(gamePlayers.get(role), request);
+        String url2 = loginUrl(gamePlayers.get(otherRole(role)), request);
         // why synchronized here? maybe multiple client requests. ?SAME? Entity (no, entity is per-hibernate-session)
         // we are trusting that hibernate will 'sync' entity state across servers?
         synchronized (gameInst) {
             if (gameInst.getStarted() != null) {
-                String url1 = loginUrl(gamePlayer1, request);
                 log.warn("Game already started: {} @ {}", url1, gameInst.getStarted());
                 return url1; // [re]start login & loading displayClient
             }
+            Optional<GameInstProps> gamePropsOpt = gameInstPropsRepository.findById(giid);
+            GameInstProps gameProps = gamePropsOpt.isPresent() ? gamePropsOpt.get() : new GameInstProps();
+
             log.warn("launchGame: gameLauncher={}", this.gameLauncher);
+            log.warn("launchGame: gameProps={}", gameProps);
+
+            LaunchInfo info = new LaunchInfo();
+            info.gameInst = toType(gameInst, IGameInstDTO.Impl.class);
+            info.gameProps = toType(gameProps, IGameInstPropsDTO.Impl.class);
+            info.gpidA = gamePlayers.get(ROLE_A).getId();
+            info.gpidB = gamePlayers.get(ROLE_B).getId();
+            info.resultTicket = this.getValidationToken(gamePlayers.get(role), request);
+            log.warn("launchGame: launchInfo={}", jsonify(info));
 
             // HttpInvoker-based Launcher; wait and parse the results into LaunchResults
-            Launcher.LaunchResults results = gameLauncher.launch(gameInst.getId());
-            Optional<GameInst> gameInstOpt = gameInstRepository.findById(gameInst.getId()); // try get NEW values
-            gameInst = gameInstOpt.get(); // ASSERT: gameInstOpt.isPresent()
-            log.debug("Launched gameInst: {}, results={}", gameInstOpt, results);
+            LaunchResults results = gameLauncher.launchPost(info);
+            // Optional<GameInst> gameInstOpt = gameInstRepository.findById(giid); // try get NEW values
+            // gameInst = gameInstOpt.get(); // ASSERT: gameInstOpt.isPresent()
+            log.debug("Launched giid: {}, results={}", giid, jsonify(results));
 
             if (results == null || results.getStarted() == null) {
-                log.warn("Game launch failed: {} from {} results={}", gameInst, base, results);
+                log.warn("Game launch failed: {} \nfrom {} \nresults={}", gameInst, base, jsonify(results));
                 // TODO: something to provoke notification to the Member(s)' web page.
-                String role = gamePlayer1.getRole();
-                return editUrl(role, gameInst);
+                return editUrl(role, gameInst) + "#fail";
             }
+            // TODO: update gameInst with results.started()
         }
         // Game is launched, let players login (&start loading DisplayClient)
-        String url1 = loginUrl(gamePlayer1, request);
-        String url2 = loginUrl(gamePlayer2, request);
         log.debug("url1={}", url1);
         log.debug("url2={}", url2);
         // use GammaJMSBroadcaster.JSONP to send other member to login; (and then --> goActive?)
         // User member2 = gamePlayer2.getPlayer().getUser();
         // sendJsonp(member2, "events.nextpage", String.format("\"%s\"", url2));
-        log.debug("launchGame: Launched={} clients: rv={}", gameInst, url1);
+        log.debug("launchGame: Launched={} clients: rv={}", giid, url1);
         return url1;
     }
 
@@ -392,9 +475,9 @@ public class GameInstResourceExt extends GameInstResource {
      * @return
      */
     private String getValidationToken(GamePlayer gamePlayer, HttpServletRequest request) {
-        String uuids = getCookieValue("JSESSIONID", request);
+        String jsessions = getCookieValue("JSESSIONID", request);
         String loginid = gamePlayer.getPlayer().getUser().getLogin();
-        log.debug("getValidationToken: for {} JSESSIONID={}", loginid, uuids);
+        log.debug("getValidationToken: for {} JSESSIONID={}", loginid, jsessions);
         // Jwt jwt = new Jwt();
         // JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
         Optional<User> optUser = userService.getUserWithAuthoritiesByLogin(loginid);
@@ -403,7 +486,7 @@ public class GameInstResourceExt extends GameInstResource {
         String username = user.getLogin();
         Long validTime = TimeUnit.HOURS.toMillis(3);
         Long gpid = gamePlayer.getId(); // @NotNull (was gamePlayer.getRole())
-        String token = gameTicketService.getTicket(username, validTime, gpid, uuids); // includes U=loginId
+        String token = gameTicketService.getTicket(username, validTime, gpid, jsessions); // includes U=loginId
         return token;
     }
 
