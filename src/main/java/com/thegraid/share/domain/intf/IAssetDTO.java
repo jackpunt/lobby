@@ -2,7 +2,6 @@ package com.thegraid.share.domain.intf;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import liquibase.pro.packaged.nA;
 
 @JsonIgnoreProperties({ "version", "id", "user" })
 @JsonDeserialize(as = IAssetDTO.Impl.class)
