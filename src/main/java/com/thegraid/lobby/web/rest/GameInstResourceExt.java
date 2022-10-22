@@ -1,6 +1,7 @@
 package com.thegraid.lobby.web.rest;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -8,7 +9,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.thegraid.lobby.auth.NotGameException;
 import com.thegraid.lobby.auth.TicketService.GameTicketService;
 import com.thegraid.lobby.config.ApplicationProperties;
-import com.thegraid.lobby.domain.Authority;
 import com.thegraid.lobby.domain.GameInst;
 import com.thegraid.lobby.domain.GameInstProps;
 import com.thegraid.lobby.domain.GamePlayer;
@@ -17,7 +17,6 @@ import com.thegraid.lobby.domain.User;
 import com.thegraid.lobby.repository.GameInstPropsRepository;
 import com.thegraid.lobby.repository.GameInstRepository;
 import com.thegraid.lobby.repository.GamePlayerRepositoryExt;
-import com.thegraid.lobby.repository.UserRepository;
 import com.thegraid.lobby.security.AuthoritiesConstants;
 import com.thegraid.lobby.service.GameInstService;
 import com.thegraid.lobby.service.UserService;
@@ -37,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -46,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -113,6 +112,38 @@ public class GameInstResourceExt extends GameInstResource {
         @Component("gameLauncher")
         public static class Rest extends Null implements GameLauncher {
 
+            static class AuthRequest {
+
+                public String username;
+                public String password;
+
+                AuthRequest(String username, String password) {
+                    this.username = username;
+                    this.password = password;
+                }
+            }
+
+            /**
+             * Object returned as body in JWT Authentication.
+             */
+            static class JWTToken {
+
+                private String idToken;
+
+                JWTToken(String idToken) {
+                    this.idToken = idToken;
+                }
+
+                @JsonProperty("id_token")
+                String getIdToken() {
+                    return idToken;
+                }
+
+                void setIdToken(String idToken) {
+                    this.idToken = idToken;
+                }
+            }
+
             private GameInstResourceExt gameInstResourceExt;
 
             // Rest(GameInstResourceExt gameInstResourceExt) {
@@ -130,6 +161,43 @@ public class GameInstResourceExt extends GameInstResource {
             @Value("${gamma.gameLaunchUrl}")
             private String gameLaunchUrl;
 
+            @Value("${gamma.launchAuthUrl}")
+            private String launchAuthUrl;
+
+            private String launchToken =
+                "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTY2NjU1NjUxM30.BbkZF_UkcaulxsFOwZP71dFsFwmduZhVHBZYwCy9H3tRktLDKH487krtxUGK4pfNfxL2nM_MES0q4dDkonRvsg"; // = "..."
+
+            private RestTemplate restTemplate;
+
+            public RestTemplate getRestTemplate() {
+                if (restTemplate == null) {
+                    restTemplate = new RestTemplate();
+                    restTemplate
+                        .getInterceptors()
+                        .add((request, body, clientHttpRequestExecution) -> {
+                            HttpHeaders headers = request.getHeaders();
+                            if (!headers.containsKey("Authorization") && launchToken != null) {
+                                String token = launchToken.toLowerCase().startsWith("bearer") ? launchToken : "Bearer " + launchToken;
+                                request.getHeaders().add("Authorization", token);
+                            }
+                            return clientHttpRequestExecution.execute(request, body);
+                        });
+                }
+                return restTemplate;
+            }
+
+            void loginToLauncher() {
+                RestTemplate rest = getRestTemplate();
+                AuthRequest ar = new AuthRequest("admin", "admin");
+                try {
+                    JWTToken jwt = rest.postForObject(launchAuthUrl, ar, JWTToken.class);
+                    launchToken = jwt.getIdToken();
+                } catch (RestClientException ex) {
+                    log.error("loginToLauncher: FAILED - " + ex.getMessage());
+                    launchToken = null;
+                }
+            }
+
             /**
              * Stub that invokes launcher implementation.
              * Using HTTP/REST invocation (for load-balancing)
@@ -138,13 +206,23 @@ public class GameInstResourceExt extends GameInstResource {
              */
             @Override
             public LaunchResults launchPost(LaunchInfo launchInfo) {
+                return launchPostAttempt(launchInfo, 0);
+            }
+
+            private LaunchResults launchPostAttempt(LaunchInfo launchInfo, int attempt) {
                 // https://spring.io/guides/gs/consuming-rest/
                 // https://www.baeldung.com/rest-template
-                RestTemplate rest = new RestTemplate();
-                try {
+                RestTemplate rest = getRestTemplate();
+                if (launchToken == null) loginToLauncher();
+                if (launchToken != null) try {
                     return rest.postForObject(gameLaunchUrl, launchInfo, LaunchResults.Impl.class);
                 } catch (RestClientException ex) {
-                    log.error("launchPost: FAILED - " + ex.getMessage());
+                    String msg = ex.getMessage();
+                    if (msg.startsWith("401 Unauthorized") && attempt < 1) {
+                        loginToLauncher();
+                        return launchPostAttempt(launchInfo, attempt++);
+                    }
+                    log.error("launchPost: FAILED - " + msg);
                 }
                 return new LaunchResults.Impl();
             }
@@ -230,7 +308,7 @@ public class GameInstResourceExt extends GameInstResource {
     public static final String ROLE_B = "B";
 
     public static String otherRole(String role) {
-        return role == ROLE_A ? ROLE_B : ROLE_A;
+        return role.equals(ROLE_A) ? ROLE_B : ROLE_A;
     }
 
     @Autowired
@@ -245,8 +323,6 @@ public class GameInstResourceExt extends GameInstResource {
     @Autowired
     private GameTicketService gameTicketService;
 
-    private final UserRepository userRepository;
-
     private final GameInstService gameInstService;
 
     private final GameInstRepository gameInstRepository;
@@ -257,14 +333,12 @@ public class GameInstResourceExt extends GameInstResource {
 
     // Constructor
     public GameInstResourceExt(
-        UserRepository userRepository,
         GameInstService gameInstService,
         GameInstRepository gameInstRepository,
         GameInstPropsRepository gameInstPropsRepository,
         GamePlayerRepositoryExt gamePlayerRepository
     ) {
         super(gameInstService, gameInstRepository);
-        this.userRepository = userRepository;
         this.gameInstService = gameInstService;
         this.gameInstRepository = gameInstRepository;
         this.gameInstPropsRepository = gameInstPropsRepository;
@@ -285,15 +359,16 @@ public class GameInstResourceExt extends GameInstResource {
     /** used for 'testing' with resetGiid
      * @return */
     private Authentication loginAs(User member) {
-        Optional<User> optUserWithAuths = userRepository.findOneWithAuthoritiesByEmailIgnoreCase(member.getEmail());
-        User user = optUserWithAuths.get();
-        Set<Authority> auths = user.getAuthorities();
+        // re-fetch User with Authorities; ASSERT .isPresent()
+        Optional<User> optUserWithAuths = userService.getUserWithAuthoritiesByLogin(member.getLogin());
         // confirm that given member has ROLE_USER
         if (
-            !auths
+            !optUserWithAuths
+                .get()
+                .getAuthorities()
                 .stream()
-                .anyMatch(a -> {
-                    return a.getName().equals(AuthoritiesConstants.USER);
+                .anyMatch(auth -> {
+                    return auth.getName().equals(AuthoritiesConstants.USER);
                 })
         ) return null; // cannot happen because User is known to own the Player[role]
         // create AuthenticationToken with ROLE_USER
@@ -347,7 +422,6 @@ public class GameInstResourceExt extends GameInstResource {
         GamePlayer gamePlayer1 = gamePlayers.get(role);
         Player player = gamePlayer1.getPlayer();
         User user = player.getUser();
-        //User user = userService.getUserWithAuthorities().get();  // if User was actually logged-in
         log.debug("\nPlayer: {}, \nUser: {}", player, user);
         Principal principal = (Principal) loginAs(user);
         if (principal == null) {
@@ -480,6 +554,7 @@ public class GameInstResourceExt extends GameInstResource {
         log.debug("getValidationToken: for {} JSESSIONID={}", loginid, jsessions);
         // Jwt jwt = new Jwt();
         // JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
+        // Optional<String> username = SecurityUtils.getCurrentUserLogin();
         Optional<User> optUser = userService.getUserWithAuthoritiesByLogin(loginid);
         if (optUser.isEmpty()) return null;
         User user = optUser.get();

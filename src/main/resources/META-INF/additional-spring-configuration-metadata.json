@@ -1,9 +1,14 @@
 {
   "properties": [
     {
-      "name": "gamma.game-launch-url",
+      "name": "gamma.gameLaunchUrl",
       "type": "java.lang.String",
-      "description": "A description for 'gamma.game-launch-url'"
+      "description": "URL to initiate game launch."
+    },
+    {
+      "name": "gamma.launchAuthUrl",
+      "type": "java.lang.String",
+      "description": "URL to obtain launch authentication token."
     }
   ]
 }
