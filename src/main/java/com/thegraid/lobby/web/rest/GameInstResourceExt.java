@@ -130,6 +130,8 @@ public class GameInstResourceExt extends GameInstResource {
 
                 private String idToken;
 
+                JWTToken() {}
+
                 JWTToken(String idToken) {
                     this.idToken = idToken;
                 }
@@ -164,8 +166,7 @@ public class GameInstResourceExt extends GameInstResource {
             @Value("${gamma.launchAuthUrl}")
             private String launchAuthUrl;
 
-            private String launchToken =
-                "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTY2NjU1NjUxM30.BbkZF_UkcaulxsFOwZP71dFsFwmduZhVHBZYwCy9H3tRktLDKH487krtxUGK4pfNfxL2nM_MES0q4dDkonRvsg"; // = "..."
+            private String launchToken = null;
 
             private RestTemplate restTemplate;
 

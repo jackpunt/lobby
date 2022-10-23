@@ -213,4 +213,4 @@ jhipster:
 # application:
 gamma:
   gameLaunchUrl: 'https://game5.thegraid.com:8445/api/launcher/launch/'
-  launchAuthUrl: 'https://game5.thegraid.com:8445/api/authenticate/'
+  launchAuthUrl: 'https://game5.thegraid.com:8445/api/authenticate'
