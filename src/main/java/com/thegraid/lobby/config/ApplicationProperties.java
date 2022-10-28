@@ -18,8 +18,9 @@ public class ApplicationProperties {
 
     public static class Gamma {
 
-        public String gameLaunchUrl = "https://game5.thegraid.com:8445/api/launcher/launch/";
-        public String launchAuthUrl = "https://game5.thegraid.com:8445/api/authenticate";
+        public String gameLaunchPath = "/api/launcher/launch";
+        public String launchAuthPath = "/api/authenticate";
+        public String[] launcherHosts;
 
         public Launch launch = new Launch();
 

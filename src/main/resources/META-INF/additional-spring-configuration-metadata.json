@@ -1,14 +1,34 @@
 {
   "properties": [
     {
-      "name": "gamma.gameLaunchUrl",
-      "type": "java.lang.String",
-      "description": "URL to initiate game launch."
-    },
-    {
-      "name": "gamma.launchAuthUrl",
+      "name": "gamma.launchAuthPath",
       "type": "java.lang.String",
       "description": "URL to obtain launch authentication token."
+    },
+    {
+      "name": "gamma.launcherHosts",
+      "type": "java.lang.String[]",
+      "description": "Array of host:port where lobby can find RestLauncher."
+    },
+    {
+      "name": "gamma.allowResetGiid",
+      "type": "java.lang.Boolean",
+      "description": "True during dev to allow resetGiid."
+    },
+    {
+      "name": "gamma.gameLaunchPath",
+      "type": "java.lang.String",
+      "description": "A description for 'gamma.gameLaunchPath'"
+    },
+    {
+      "name": "gamma.gameLoginPath",
+      "type": "java.lang.String",
+      "description": "A description for 'gamma.gameLoginPath'"
+    },
+    {
+      "name": "gamma.gameEditPath",
+      "type": "java.lang.String",
+      "description": "A description for 'gamma.gameEditPath'"
     }
   ]
 }

@@ -58,6 +58,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.view.RedirectView;
 
 @Primary
 @RestController
@@ -68,209 +69,155 @@ public class GameInstResourceExt extends GameInstResource {
 
     static final Logger log = LoggerFactory.getLogger(GameInstResource.class);
 
-    /** originally an RMI interface, now a REST inteface */
-    public static interface GameLauncher {
-        /**
-         * @param giid
-         * @param gameInst if available, else obtained by findById(giid)
-         */
-        LaunchResults launchPost(LaunchInfo launchInfo);
+    /**
+     * launch game using HTTP to gamma-web...LaunchService.
+     */
+    @Component("gameLauncher")
+    public static class RestLauncher {
 
-        GameResults abortIfRunning(Long giid);
+        static class AuthRequest {
 
-        void finished(GameResults results);
+            public String username;
+            public String password;
 
-        // using this local class until we build something to replace the InProcLauncher
-        // plays the role of AbstractGameLauncher...
-        @Component("xgameLauncher")
-        public static class Null implements GameLauncher {
-
-            // TODO: track games that are launched but not finished, so we can abort them.
-
-            @Override
-            public LaunchResults launchPost(LaunchInfo launchInfo) {
-                log.warn("NullGameLauncher: Not launching " + launchInfo.gameInst.getId());
-                return null;
-            }
-
-            @Override
-            public GameResults abortIfRunning(Long giid) {
-                log.warn("NullGameLauncher: Not aborting " + giid);
-                return null;
-            }
-
-            @Override
-            public void finished(GameResults results) {
-                // TODO parse results and push to database.
-                log.warn("NullGameLauncher: Not recording results " + (results != null ? results.getId() : ""));
+            AuthRequest(String username, String password) {
+                this.username = username;
+                this.password = password;
             }
         }
 
         /**
-         * launch game using HTTP to gamma-web...LaunchService.
+         * Object returned as body in JWT Authentication.
          */
-        @Component("gameLauncher")
-        public static class Rest extends Null implements GameLauncher {
+        static class JWTToken {
 
-            static class AuthRequest {
+            private String idToken;
 
-                public String username;
-                public String password;
+            JWTToken() {}
 
-                AuthRequest(String username, String password) {
-                    this.username = username;
-                    this.password = password;
-                }
+            JWTToken(String idToken) {
+                this.idToken = idToken;
             }
 
-            /**
-             * Object returned as body in JWT Authentication.
-             */
-            static class JWTToken {
-
-                private String idToken;
-
-                JWTToken() {}
-
-                JWTToken(String idToken) {
-                    this.idToken = idToken;
-                }
-
-                @JsonProperty("id_token")
-                String getIdToken() {
-                    return idToken;
-                }
-
-                void setIdToken(String idToken) {
-                    this.idToken = idToken;
-                }
+            @JsonProperty("id_token")
+            String getIdToken() {
+                return idToken;
             }
 
-            private GameInstResourceExt gameInstResourceExt;
-
-            // Rest(GameInstResourceExt gameInstResourceExt) {
-            //     this.gameInstResourceExt = gameInstResourceExt; // circular dependency
-            // }
-
-            // To be a Proxy to GameLauncher running on gamma[567].thegraid.com
-            // using HTTP-REST:
-            // Send PUT to start a new game
-            // POST to 'start/terminate'? no real need from here. (client has ClockCtrl)
-            // Send GET to get status
-            // Send DEL to terminate?
-            // Send message/request to game Server(giid) get actual status.
-
-            @Value("${gamma.gameLaunchUrl}")
-            private String gameLaunchUrl;
-
-            @Value("${gamma.launchAuthUrl}")
-            private String launchAuthUrl;
-
-            private String launchToken = null;
-
-            private RestTemplate restTemplate;
-
-            public RestTemplate getRestTemplate() {
-                if (restTemplate == null) {
-                    restTemplate = new RestTemplate();
-                    restTemplate
-                        .getInterceptors()
-                        .add((request, body, clientHttpRequestExecution) -> {
-                            HttpHeaders headers = request.getHeaders();
-                            if (!headers.containsKey("Authorization") && launchToken != null) {
-                                String token = launchToken.toLowerCase().startsWith("bearer") ? launchToken : "Bearer " + launchToken;
-                                request.getHeaders().add("Authorization", token);
-                            }
-                            return clientHttpRequestExecution.execute(request, body);
-                        });
-                }
-                return restTemplate;
+            void setIdToken(String idToken) {
+                this.idToken = idToken;
             }
+        }
 
-            void loginToLauncher() {
-                RestTemplate rest = getRestTemplate();
-                AuthRequest ar = new AuthRequest("admin", "admin");
+        private GameInstResourceExt gameInstResourceExt;
+
+        // Rest(GameInstResourceExt gameInstResourceExt) {
+        // this.gameInstResourceExt = gameInstResourceExt; // circular dependency
+        // }
+
+        // To be a Proxy to GameLauncher running on gamma[567].thegraid.com
+        // using HTTP-REST:
+        // Send PUT to start a new game
+        // POST to 'start/terminate'? no real need from here. (client has ClockCtrl)
+        // Send GET to get status
+        // Send DEL to terminate?
+        // Send message/request to game Server(giid) get actual status.
+
+        @Value("${gamma.gameLaunchPath}")
+        private String gameLaunchPath;
+
+        @Value("${gamma.launchAuthPath}")
+        private String launchAuthPath;
+
+        private Map<String, String> launchTokens = new HashMap<String, String>();
+
+        private Map<String, RestTemplate> hostTemplates = new HashMap<String, RestTemplate>();
+
+        public RestTemplate getRestTemplate(String hostPort) {
+            RestTemplate restTemplate = hostTemplates.get(hostPort);
+            if (restTemplate == null) {
+                restTemplate = new RestTemplate();
+                restTemplate
+                    .getInterceptors()
+                    .add((request, body, clientHttpRequestExecution) -> {
+                        String launchToken = launchTokens.get(hostPort);
+                        HttpHeaders headers = request.getHeaders();
+                        if (!headers.containsKey("Authorization") && launchToken != null) {
+                            String token = launchToken.toLowerCase().startsWith("bearer") ? launchToken : "Bearer " + launchToken;
+                            request.getHeaders().add("Authorization", token);
+                        }
+                        return clientHttpRequestExecution.execute(request, body);
+                    });
+            }
+            return restTemplate;
+        }
+
+        String loginToLauncher(String hostPort) {
+            RestTemplate rest = getRestTemplate(hostPort);
+            AuthRequest ar = new AuthRequest("admin", "admin");
+            try {
+                String launchUrl = "https://" + hostPort + launchAuthPath;
+                JWTToken jwt = rest.postForObject(launchUrl, ar, JWTToken.class);
+                String token = jwt.getIdToken();
+                launchTokens.put(hostPort, token);
+                return token;
+            } catch (RestClientException ex) {
+                log.error("loginToLauncher: FAILED - " + ex.getMessage());
+                launchTokens.remove(hostPort);
+                return null;
+            }
+        }
+
+        /**
+         * Stub that invokes launcher implementation.
+         * Using HTTP/REST invocation (for load-balancing)
+         *
+         * @param hostPort "host.domain:port"
+         * @return results {HostURL, StartTime}
+         */
+        public LaunchResults launchPost(String hostPort, LaunchInfo launchInfo) {
+            return launchPostAttempt(hostPort, launchInfo, 0);
+        }
+
+        private LaunchResults launchPostAttempt(String hostPort, LaunchInfo launchInfo, int attempt) {
+            // https://spring.io/guides/gs/consuming-rest/
+            // https://www.baeldung.com/rest-template
+            if (launchTokens.get(hostPort) == null) loginToLauncher(hostPort);
+            if (launchTokens.get(hostPort) != null) {
                 try {
-                    JWTToken jwt = rest.postForObject(launchAuthUrl, ar, JWTToken.class);
-                    launchToken = jwt.getIdToken();
-                } catch (RestClientException ex) {
-                    log.error("loginToLauncher: FAILED - " + ex.getMessage());
-                    launchToken = null;
-                }
-            }
-
-            /**
-             * Stub that invokes launcher implementation.
-             * Using HTTP/REST invocation (for load-balancing)
-             *
-             * @return results {HostURL, StartTime}
-             */
-            @Override
-            public LaunchResults launchPost(LaunchInfo launchInfo) {
-                return launchPostAttempt(launchInfo, 0);
-            }
-
-            private LaunchResults launchPostAttempt(LaunchInfo launchInfo, int attempt) {
-                // https://spring.io/guides/gs/consuming-rest/
-                // https://www.baeldung.com/rest-template
-                RestTemplate rest = getRestTemplate();
-                if (launchToken == null) loginToLauncher();
-                if (launchToken != null) try {
-                    return rest.postForObject(gameLaunchUrl, launchInfo, LaunchResults.Impl.class);
+                    RestTemplate rest = getRestTemplate(hostPort);
+                    String launchUrl = "https://" + hostPort + gameLaunchPath;
+                    return rest.postForObject(launchUrl, launchInfo, LaunchResults.Impl.class);
                 } catch (RestClientException ex) {
                     String msg = ex.getMessage();
                     if (msg.startsWith("401 Unauthorized") && attempt < 1) {
-                        loginToLauncher();
-                        return launchPostAttempt(launchInfo, attempt++);
+                        return launchPostAttempt(hostPort, launchInfo, attempt++);
                     }
                     log.error("launchPost: FAILED - " + msg);
                 }
-                return new LaunchResults.Impl();
             }
-
-            @Override
-            public GameResults abortIfRunning(Long giid) {
-                log.warn("HttpGameLauncher: Not aborting " + giid); // TODO: a new REST endpoint
-                //finished(new GameResults.Impl(giid)); // with null values...
-                return null;
-            }
-
-            @Override
-            public void finished(GameResults results) {
-                gameInstResourceExt.recordResults(results, null);
-            }
-        }
-    }
-
-    public static class RedirectDTO {
-
-        public String url;
-
-        RedirectDTO(String url) {
-            this.url = url;
+            return new LaunchResults.Impl(); // login OR launch failed
         }
 
-        /**
-         * suitable for SpringMVC redirect
-         *
-         * @return HTML body with a redirect link
-         */
-        public String toBody() {
-            return String.format("<body>redirect:<a href=\"%1$s\">%1$s</a></body>", this.url);
+        public GameResults abortIfRunning(Long giid) {
+            log.warn("HttpGameLauncher: Not aborting " + giid); // TODO: a new REST endpoint
+            // finished(new GameResults.Impl(giid)); // with null values...
+            return null;
         }
 
-        public String toString() {
-            return "RedirectDTO{url='" + this.url + "'}";
+        public void finished(GameResults results) {
+            gameInstResourceExt.recordResults(results, null);
         }
     }
 
     /** URL path for redirect: to gpEdit; ALSO: path to view gi/edit${GameClassName} */
-    private static String EDIT_PATH = "redit";
+    @Value("${gamma.gameEditPath}")
+    private String gameEditPath; // 'game-inst/%s/edit#role=%s'
 
     // Two cases: return a view "gi/foo" with Model *OR* redirect to a URL: "/gi/edit/{role}/{giid}"
 
     private String editPath(String role, Long giid) {
-        return String.format("/%s/%s/%d", EDIT_PATH, role, giid);
+        return String.format(gameEditPath, giid, role);
     }
 
     private String editUrl(String role, GameInst gameInst) {
@@ -312,11 +259,17 @@ public class GameInstResourceExt extends GameInstResource {
         return role.equals(ROLE_A) ? ROLE_B : ROLE_A;
     }
 
-    @Autowired
-    public GameLauncher gameLauncher;
+    @Value("${gamma.allowResetGiid}")
+    private Boolean allowResetGiid;
+
+    @Value("${gamma.launchHosts")
+    private String[] launchHosts;
+
+    @Value("${gamma.gameLoginPath}")
+    private String gameLoginPath;
 
     @Autowired
-    private ApplicationProperties props;
+    public RestLauncher gameLauncher;
 
     @Autowired
     private UserService userService;
@@ -394,7 +347,7 @@ public class GameInstResourceExt extends GameInstResource {
         // Now: launchGameInstIfReady()
     }
 
-    /** suitable for callback when Launche returns GameResults */
+    /** suitable for callback when Launcher returns GameResults */
     private void recordResults(GameResults results, GameInst gameInst) {
         if (gameInst == null) {
             gameInst = gameInstRepository.findById(results.getId()).get();
@@ -406,16 +359,17 @@ public class GameInstResourceExt extends GameInstResource {
         gameInstRepository.save(gameInst); // reset fields in database.
     }
 
+    // https://lobby2.thegraid.com:8442/gammaDS/gi/redit/A/154
     @RequestMapping(value = "redit/{role:[AB]}/{giid}") // TODO: redit/{giid}/{rold:[AB]}
     //@ResponseBody
-    public RedirectDTO resetGiid(@PathVariable("role") String role, @PathVariable("giid") Long giid, HttpServletRequest request) {
+    public RedirectView resetGiid(@PathVariable("role") String role, @PathVariable("giid") Long giid, HttpServletRequest request) {
         Optional<GameInst> gameInstOpt = gameInstRepository.findById(giid);
         if (gameInstOpt.isEmpty()) throw new NotGameException("Invalid gameInst id: " + giid);
-        // resetGiid ONLY works when using the "InProc" GameLauncher!
-        if (!(gameLauncher instanceof GameLauncher.Rest)) {
+        // resetGiid ONLY works when using when enabled in application.yml
+        if (!allowResetGiid) {
             throw new IllegalStateException("Not configured for resetGiid: " + gameLauncher);
         } else {
-            ((GameLauncher.Rest) gameLauncher).gameInstResourceExt = this;
+            (gameLauncher).gameInstResourceExt = this;
         }
         GameInst gameInst = gameInstOpt.get();
         Map<String, GamePlayer> gamePlayers = findGamePlayerByRole(gameInst);
@@ -430,51 +384,29 @@ public class GameInstResourceExt extends GameInstResource {
         }
         log.debug("Principal requesting reset: {} of gameInst= {}", principal.getName(), gameInst);
 
-        resetGame(gameInst);
+        resetGame(gameInst); // nullify started and results [does not change hostUrl]
 
-        String launchUrl = props.gamma.gameLaunchUrl; // where the launcher is listening (https:.../launcher)
         String hostUrl = gameInst.getHostUrl(); // "https://game5.gamma.com:8445/launcher/GameControl/giid"
-        String newUrl = replaceHostInUrl(hostUrl, launchUrl); // talk to the REST endpoint on given host
-        log.info("temporary setLaunchUrl: {}", newUrl);
-        props.gamma.gameLaunchUrl = newUrl;
-        String url = launchGame(gamePlayers, role, request);
-        props.gamma.gameLaunchUrl = launchUrl; // reset to original
-
-        RedirectDTO redirect = new RedirectDTO(url);
-        return redirect;
-        // redirect to url (as returned form launchGame)
-        //String format = "redirect:%1$s";
-        // format = "<body>redirect:<a href=\"%1$s\">%1$s</a></body>"; // set
-        // @ResponseBody above
-        // url ="https://www.google.com";
-        // url = editUrl(role, gameInst);
-        //String rv = String.format(format, url);
-        //log.warn("rv = {}", rv);
-        //return rv;
-    }
-
-    /** use HOST:PORT from url with proto/path from gameLaunchUrl */
-    private String replaceHostInUrl(String url, String gameLaunchUrl) {
-        if (url != null) try {
-            URL hostURL = new URL(url);
-            URL gameLaunchURL = new URL(gameLaunchUrl); //.getProtocol().split("/")[0];
-            URL newLaunchURL = new URL(gameLaunchURL.getProtocol(), hostURL.getHost(), hostURL.getPort(), gameLaunchURL.getPath());
-            return newLaunchURL.toString();
-        } catch (MalformedURLException e) {
-            // assert: we believe this cannot happen: hostUrl & launchUrl are parseable.
-            log.warn("unparsed launchUrl: {}", e);
+        log.debug("resetGiid: hostUrl = {}", hostUrl);
+        if (hostUrl == null || hostUrl.isEmpty()) {
+            hostUrl = launchHosts[0];
+            gameInst.setHostUrl(hostUrl); // set so Launcher can find in gameInst
+            gameInstRepository.save(gameInst); // the latest target Launcher
         }
-        return url;
+
+        log.info("launch giid {} from hostUrl: {}", giid, hostUrl);
+        String redirectUrl = launchGame(gamePlayers, role, request); // gamePlayer[s]->gameInst->giid
+        log.debug("new RedirectView({})", redirectUrl);
+        return new RedirectView(redirectUrl);
     }
 
     // Start game [delegate to GameLauncher] & download [JNLP? Flash? whatever...]
     /**
      * Start a game.
      * Send info to LauncherService; redirect to login URL if launch works.
-     * @param gamePlayer who initiated the Launch (so is active/online/driving this request)
-     * @param otherPlayer (maybe not online)
-     * @param gameProps
-     * @param request
+     * @param gamePlayers for each of ROLE_A & ROLE_B
+     * @param role the initiating GamePlayer; is active/online/driving this request
+     * @param request - holds session_id for current player
      * @return the redirect url (success:login or fail:edit)
      */
     private String launchGame(Map<String, GamePlayer> gamePlayers, String role, HttpServletRequest request) {
@@ -482,9 +414,8 @@ public class GameInstResourceExt extends GameInstResource {
         Long giid = gameInst.getId();
 
         String base = request.getRequestURL().toString(); //baseURL(request);
-        log.warn("launchGame: {} from {}", gameInst, base);
+        log.warn("launchGame: {} from {}", gameInst, base); // identify this lobby?
         String url1 = loginUrl(gamePlayers.get(role), request);
-        String url2 = loginUrl(gamePlayers.get(otherRole(role)), request);
         // why synchronized here? maybe multiple client requests. ?SAME? Entity (no, entity is per-hibernate-session)
         // we are trusting that hibernate will 'sync' entity state across servers?
         synchronized (gameInst) {
@@ -507,7 +438,7 @@ public class GameInstResourceExt extends GameInstResource {
             log.warn("launchGame: launchInfo={}", jsonify(info));
 
             // HttpInvoker-based Launcher; wait and parse the results into LaunchResults
-            LaunchResults results = gameLauncher.launchPost(info);
+            LaunchResults results = gameLauncher.launchPost(gameInst.getHostUrl(), info);
             // Optional<GameInst> gameInstOpt = gameInstRepository.findById(giid); // try get NEW values
             // gameInst = gameInstOpt.get(); // ASSERT: gameInstOpt.isPresent()
             log.debug("Launched giid: {}, results={}", giid, jsonify(results));
@@ -517,11 +448,17 @@ public class GameInstResourceExt extends GameInstResource {
                 // TODO: something to provoke notification to the Member(s)' web page.
                 return editUrl(role, gameInst) + "#fail";
             }
-            // TODO: update gameInst with results.started()
+            URL hostUrl = newURL(results.getHostURL());
+            String hostPort = hostUrl.getHost() + ":" + hostUrl.getPort();
+            gameInst.setHostUrl(hostPort);
+            gameInst.setStarted(results.getStarted());
+            gameInstRepository.save(gameInst); // update started (& hostUrl)
+            url1 = loginUrl(gamePlayers.get(role), request);
+            // other player needs to login to Lobby to obtain their login to Game
+
         }
         // Game is launched, let players login (&start loading DisplayClient)
         log.debug("url1={}", url1);
-        log.debug("url2={}", url2);
         // use GammaJMSBroadcaster.JSONP to send other member to login; (and then --> goActive?)
         // User member2 = gamePlayer2.getPlayer().getUser();
         // sendJsonp(member2, "events.nextpage", String.format("\"%s\"", url2));
@@ -529,16 +466,45 @@ public class GameInstResourceExt extends GameInstResource {
         return url1;
     }
 
+    URL newURL(String url) {
+        try {
+            return new URL(url);
+        } catch (MalformedURLException e) {
+            log.warn("url {}: {}", url, e);
+            return null;
+        }
+    }
+
+    LaunchInfo getLaunchInfo(GameInst gameInst, Map<String, GamePlayer> gamePlayers, String role, HttpServletRequest request) {
+        Long giid = gameInst.getId();
+        Optional<GameInstProps> gamePropsOpt = gameInstPropsRepository.findById(giid);
+        GameInstProps gameProps = gamePropsOpt.isPresent() ? gamePropsOpt.get() : new GameInstProps();
+
+        log.warn("launchGame: gameLauncher={}", this.gameLauncher);
+        log.warn("launchGame: gameProps={}", gameProps);
+
+        LaunchInfo info = new LaunchInfo();
+        info.gameInst = toType(gameInst, IGameInstDTO.Impl.class);
+        info.gameProps = toType(gameProps, IGameInstPropsDTO.Impl.class);
+        info.gpidA = gamePlayers.get(ROLE_A).getId();
+        info.gpidB = gamePlayers.get(ROLE_B).getId();
+        info.resultTicket = this.getValidationToken(gamePlayers.get(role), request);
+        log.warn("launchGame: launchInfo={}", jsonify(info));
+        return info;
+    }
+
     /**
      * login to game server.
-     * @param gamePlayer
-     * @param request
-     * @return "https://host:port/login?P=...,T=...,U=username,V=giid"
+     * @param gamePlayer -> gameInst -> hostUrl
+     * @param request -> cookies -> JSESSIONID
+     * @return gameLoginPath(hostPort, giid, token)
      */
     private String loginUrl(GamePlayer gamePlayer, HttpServletRequest request) {
         GameInst gameInst = gamePlayer.getGameInst();
+        String hostPort = gameInst.getHostUrl();
+        Long giid = gameInst.getId();
         String token = getValidationToken(gamePlayer, request);
-        String url = gameInst.getHostUrl() + "/login?" + token;
+        String url = String.format(gameLoginPath, hostPort, giid, token);
         return url;
     }
 

@@ -212,5 +212,9 @@ jhipster:
 
 # application:
 gamma:
-  gameLaunchUrl: 'https://game5.thegraid.com:8445/api/launcher/launch/'
-  launchAuthUrl: 'https://game5.thegraid.com:8445/api/authenticate'
+  gameLaunchPath: '/api/launcher/launch/'
+  gameLoginPath: 'https://%s/gameCtl/%s/login?%s' # hostPort, giid, token
+  gameEditPath: 'game-inst/%s/edit#role=%s'
+  launchAuthPath: '/api/authenticate'
+  launcherHosts:
+    - 'game5.thegraid.com:8445'
