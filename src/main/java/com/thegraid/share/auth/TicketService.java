@@ -10,6 +10,8 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -52,7 +54,7 @@ public class TicketService {
             byte[] text_bytes = text.getBytes(StandardCharsets.UTF_8);
             byte[] salt_bytes = ByteBuffer.allocate(8).order(ByteOrder.BIG_ENDIAN).putLong(salt).array();
             byte[] hash = digest.digest(concatBytes(salt_bytes, text_bytes));
-            String rv = Base64.getEncoder().encodeToString(hash);
+            String rv = Base64.getUrlEncoder().encodeToString(hash);
             return rv;
         } catch (NoSuchAlgorithmException ex) {
             log.error("Error: {}", ex);
@@ -114,6 +116,15 @@ public class TicketService {
         return true;
     }
 
+    public String getCookieValue(String name, HttpServletRequest req) {
+        final Cookie[] cookies = req.getCookies();
+        if (cookies == null) return null;
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals(name)) return cookie.getValue();
+        }
+        return null;
+    }
+
     /** suitable for using a random String (JSESSIONID) as a per-user/session Salt
      * @param jsessionid an unguessable String
      * @return Long hash of derived from jesssionid
@@ -140,11 +151,11 @@ public class TicketService {
     @Service
     public static class GameTicketService extends TicketService {
 
-        /** P=(\p{XDigit}{64})(&T=(\p{XDigit}{11,})&U=([^&]+)&V=(\d{1,19}))(&.*)?$ */
+        /**
+         * P=(?<P>[a-zA-Z0-9_-]*)(?<raw2>&T=(?<T>\\p{XDigit}{11,})&U=(?<U>[^&]+)&V=(\\d{1,19}))(?<rest>&.*)?$
+         */
         private final Pattern pat = Pattern.compile(
-            // "P=(\\p{XDigit}{40,})(&T=(\\p{XDigit}{11,})&U=([^&]+)&V=(\\d{1,19}))(&.*)?$");
-            // "P=(\\p{XDigit}{64})(&T=(\\p{XDigit}{11,})&U=([^&]+)&V=(\\d{1,19}))(&.*)?$");
-            "P=(?<P>\\p{XDigit}{64})(?<raw2>&T=(?<T>\\p{XDigit}{11,})&U=(?<U>[^&]+)&V=(\\d{1,19}))(?<rest>&.*)?$"
+            "P=(?<P>[a-zA-Z0-9=_-]*)(?<raw2>&T=(?<T>\\p{XDigit}{11,})&U=(?<U>[^&]+)(?<rest>&V=(\\d{1,19}).*))?$"
         );
 
         /**
@@ -163,6 +174,12 @@ public class TicketService {
         // export this if there is some other salt to share with the validating side
         private String getTicket(String username, Long validTime, Long gpid, Long salt) {
             return super.getGenericTicket(username, salt, validTime, "V", gpid.toString());
+        }
+
+        public boolean validateTicket(String p, String t, String u, String v, String jsessions) {
+            String raw = String.format("P=%s&T=%s&U=%s&V=%s", p, t, u, v);
+            Long salt = getSaltFromJSession(jsessions);
+            return validateTicket(raw, salt);
         }
 
         public boolean validateTicket(CharSequence raw, Long salt) {
