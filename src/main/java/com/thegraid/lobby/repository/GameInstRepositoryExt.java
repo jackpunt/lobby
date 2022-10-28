@@ -3,7 +3,6 @@ package com.thegraid.lobby.repository;
 import com.thegraid.lobby.domain.GameInst;
 import com.thegraid.lobby.domain.GameInstProps;
 import java.util.List;
-import java.util.Map;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

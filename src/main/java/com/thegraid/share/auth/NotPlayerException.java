@@ -1,4 +1,4 @@
-package com.thegraid.lobby.auth;
+package com.thegraid.share.auth;
 
 public class NotPlayerException extends IllegalArgumentException {
 

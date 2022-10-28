@@ -1,4 +1,4 @@
-package com.thegraid.lobby.auth;
+package com.thegraid.share.auth;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

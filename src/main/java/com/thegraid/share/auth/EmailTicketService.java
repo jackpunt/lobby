@@ -1,6 +1,5 @@
-package com.thegraid.lobby.auth;
+package com.thegraid.share.auth;
 
-import com.thegraid.lobby.domain.User;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Base64;
@@ -25,10 +24,9 @@ public class EmailTicketService extends TicketService {
      * @param args      &amp;"key"="value" to be included in ticket
      * @return a String that can be validated by NoFormLoginDecoder.
      */
-    public String getTicket(User user, long validTime, String... args) {
+    public String getTicket(String username, String bcpw, long validTime, String... args) {
         // do not modify pwh or salt if already exists
-        Long genSalt = getSaltFromUser(user); // assert(genSalt != null)
-        String username = user.getLogin();
+        Long genSalt = getSaltFromUser(bcpw); // assert(genSalt != null)
         return super.getGenericTicket(username, genSalt, validTime, args);
     }
 
@@ -43,11 +41,10 @@ public class EmailTicketService extends TicketService {
     private final Long no_salt = 5345909788840343976L; // or 0 or null I suppose
     private final BCryptSaltSource bcss = new BCryptSaltSource();
 
-    public Long getSaltFromUser(User user) {
-        String pw = user.getPassword();
-        if (pw.length() < 60) return no_salt;
+    public Long getSaltFromUser(String bcpw) {
+        if (bcpw.length() < 60) return no_salt;
         // 0:{bcrypt}, 1:2a, 2:12, 3:salt+passwd
-        String salt22 = pw.split("\\$", 4)[3].substring(0, 22);
+        String salt22 = bcpw.split("\\$", 4)[3].substring(0, 22);
         return bcss.decodeSalt(salt22);
     }
 
