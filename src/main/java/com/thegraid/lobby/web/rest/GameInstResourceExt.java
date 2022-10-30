@@ -1,7 +1,6 @@
 package com.thegraid.lobby.web.rest;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -21,6 +20,8 @@ import com.thegraid.lobby.service.dto.GameInstDTO;
 import com.thegraid.share.LobbyLauncher.GameResults;
 import com.thegraid.share.LobbyLauncher.LaunchInfo;
 import com.thegraid.share.LobbyLauncher.LaunchResults;
+import com.thegraid.share.auth.AuthUtils;
+import com.thegraid.share.auth.AuthUtils.RestTemplateWithAuth;
 import com.thegraid.share.auth.NotGameException;
 import com.thegraid.share.auth.TicketService.GameTicketService;
 import com.thegraid.share.domain.intf.IGameInstDTO;
@@ -36,14 +37,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -74,40 +73,6 @@ public class GameInstResourceExt extends GameInstResource {
     @Component("gameLauncher")
     public static class RestLauncher {
 
-        static class AuthRequest {
-
-            public String username;
-            public String password;
-
-            AuthRequest(String username, String password) {
-                this.username = username;
-                this.password = password;
-            }
-        }
-
-        /**
-         * Object returned as body in JWT Authentication.
-         */
-        static class JWTToken {
-
-            private String idToken;
-
-            JWTToken() {}
-
-            JWTToken(String idToken) {
-                this.idToken = idToken;
-            }
-
-            @JsonProperty("id_token")
-            String getIdToken() {
-                return idToken;
-            }
-
-            void setIdToken(String idToken) {
-                this.idToken = idToken;
-            }
-        }
-
         private GameInstResourceExt gameInstResourceExt;
 
         // Rest(GameInstResourceExt gameInstResourceExt) {
@@ -132,39 +97,24 @@ public class GameInstResourceExt extends GameInstResource {
 
         private Map<String, RestTemplate> hostTemplates = new HashMap<String, RestTemplate>();
 
+        /**
+         * obtain/create a RestTemplate that inserts the CURRENT JWT/launchToken for the given hostPort.
+         * @param hostPort
+         * @return
+         */
         public RestTemplate getRestTemplate(String hostPort) {
             RestTemplate restTemplate = hostTemplates.get(hostPort);
             if (restTemplate == null) {
-                restTemplate = new RestTemplate();
-                restTemplate
-                    .getInterceptors()
-                    .add((request, body, clientHttpRequestExecution) -> {
-                        String launchToken = launchTokens.get(hostPort);
-                        HttpHeaders headers = request.getHeaders();
-                        if (!headers.containsKey("Authorization") && launchToken != null) {
-                            String token = launchToken.toLowerCase().startsWith("bearer") ? launchToken : "Bearer " + launchToken;
-                            request.getHeaders().add("Authorization", token);
-                        }
-                        return clientHttpRequestExecution.execute(request, body);
-                    });
+                restTemplate = new RestTemplateWithAuth(() -> launchTokens.get(hostPort));
             }
             return restTemplate;
         }
 
-        String loginToLauncher(String hostPort) {
+        private String loginToLauncher(String hostPort) {
             RestTemplate rest = getRestTemplate(hostPort);
-            AuthRequest ar = new AuthRequest("admin", "admin");
-            try {
-                String launchUrl = "https://" + hostPort + launchAuthPath;
-                JWTToken jwt = rest.postForObject(launchUrl, ar, JWTToken.class);
-                String token = jwt.getIdToken();
-                launchTokens.put(hostPort, token);
-                return token;
-            } catch (RestClientException ex) {
-                log.error("loginToLauncher: FAILED - " + ex.getMessage());
-                launchTokens.remove(hostPort);
-                return null;
-            }
+            String launchToken = AuthUtils.loginToUrl(rest, "https://" + hostPort + launchAuthPath, "admin", "admin");
+            launchTokens.put(hostPort, launchToken);
+            return launchToken;
         }
 
         /**
@@ -515,7 +465,7 @@ public class GameInstResourceExt extends GameInstResource {
      * @return
      */
     private String getValidationToken(GamePlayer gamePlayer, HttpServletRequest request) {
-        String jsessions = getCookieValue("JSESSIONID", request);
+        String jsessions = AuthUtils.getCookieValue("JSESSIONID", request);
         String loginid = gamePlayer.getPlayer().getUser().getLogin();
         log.debug("getValidationToken: for {} JSESSIONID={}", loginid, jsessions);
         // Jwt jwt = new Jwt();
@@ -529,16 +479,6 @@ public class GameInstResourceExt extends GameInstResource {
         Long gpid = gamePlayer.getId(); // @NotNull (was gamePlayer.getRole())
         String token = gameTicketService.getTicket(username, validTime, gpid, jsessions); // includes U=loginId
         return token;
-    }
-
-    // @CheckNull
-    private String getCookieValue(String name, HttpServletRequest req) {
-        final Cookie[] cookies = req.getCookies();
-        if (cookies == null) return null;
-        for (Cookie cookie : cookies) {
-            if (cookie.getName().equals(name)) return cookie.getValue();
-        }
-        return null;
     }
 
     // InfoService for GamaLauncher
