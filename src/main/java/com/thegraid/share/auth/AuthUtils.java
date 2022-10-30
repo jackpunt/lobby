@@ -1,7 +1,6 @@
 package com.thegraid.share.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;

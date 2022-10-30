@@ -60,7 +60,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 @Primary
 @RestController
-@RequestMapping("gammaDS/gi")
+@RequestMapping("lobby/gi")
 public class GameInstResourceExt extends GameInstResource {
 
     // Using JWT: https://medium.com/innoventes/spring-boot-with-jwt-7970e5be4540
@@ -308,7 +308,7 @@ public class GameInstResourceExt extends GameInstResource {
         gameInstRepository.save(gameInst); // reset fields in database.
     }
 
-    // https://lobby2.thegraid.com:8442/gammaDS/gi/redit/A/154
+    // https://lobby2.thegraid.com:8442/lobby/gi/redit/A/154
     @RequestMapping(value = "redit/{role:[AB]}/{giid}") // TODO: redit/{giid}/{rold:[AB]}
     //@ResponseBody
     public RedirectView resetGiid(@PathVariable("role") String role, @PathVariable("giid") Long giid, HttpServletRequest request) {
@@ -318,7 +318,7 @@ public class GameInstResourceExt extends GameInstResource {
         if (!allowResetGiid) {
             throw new IllegalStateException("Not configured for resetGiid: " + gameLauncher);
         } else {
-            (gameLauncher).gameInstResourceExt = this;
+            (gameLauncher).gameInstResourceExt = this; // @AutoWired is circular
         }
         GameInst gameInst = gameInstOpt.get();
         Map<String, GamePlayer> gamePlayers = findGamePlayerByRole(gameInst);
@@ -462,12 +462,17 @@ public class GameInstResourceExt extends GameInstResource {
      * build a validation token for the GamePlayer's current request/session.
      * @param gamePlayer
      * @param request
-     * @return
+     * @return token (or null if no JSESSSIONID)
      */
     private String getValidationToken(GamePlayer gamePlayer, HttpServletRequest request) {
         String jsessions = AuthUtils.getCookieValue("JSESSIONID", request);
         String loginid = gamePlayer.getPlayer().getUser().getLogin();
         log.debug("getValidationToken: for {} JSESSIONID={}", loginid, jsessions);
+        if (jsessions == null) {
+            log.warn("Session expired");
+            jsessions = ""; // TODO: redirect to login page
+            //return null;
+        }
         // Jwt jwt = new Jwt();
         // JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
         // Optional<String> username = SecurityUtils.getCurrentUserLogin();
