@@ -1,5 +1,7 @@
 package com.thegraid.lobby.web.rest;
 
+import static org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,6 +51,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -259,32 +262,44 @@ public class GameInstResourceExt extends GameInstResource {
         return rv;
     }
 
-    /** used for 'testing' with resetGiid
-     * @return */
-    private Authentication loginAs(User member) {
+    public boolean hasUserAuth(User member) {
         // re-fetch User with Authorities; ASSERT .isPresent()
         Optional<User> optUserWithAuths = userService.getUserWithAuthoritiesByLogin(member.getLogin());
+        if (!optUserWithAuths.isPresent()) return false;
         // confirm that given member has ROLE_USER
-        if (
-            !optUserWithAuths
-                .get()
-                .getAuthorities()
-                .stream()
-                .anyMatch(auth -> {
-                    return auth.getName().equals(AuthoritiesConstants.USER);
-                })
-        ) return null; // cannot happen because User is known to own the Player[role]
-        // create AuthenticationToken with ROLE_USER
+        return optUserWithAuths
+            .get()
+            .getAuthorities()
+            .stream()
+            .anyMatch(auth -> {
+                return auth.getName().equals(AuthoritiesConstants.USER);
+            });
+    }
+
+    /** used for 'testing' with resetGiid
+     * @return */
+    private Authentication loginAs(User member, HttpServletRequest request) {
+        if (!hasUserAuth(member)) return null; // cannot happen because User is known to own the Player[role]
+        Authentication authToken0 = SecurityContextHolder.getContext().getAuthentication();
         String loginid = member.getLogin();
+        // are we *already* logged-in as member?
+        if (loginid.equals(authToken0.getName())) {
+            final String jsessions = AuthUtils.getCookieValue("JSESSIONID", request);
+            log.debug("loginAs: already \'{}\' JSESSIONID= {}", loginid, jsessions);
+            return authToken0;
+        }
+        // create AuthenticationToken with ROLE_USER
         String passwd = member.getPassword();
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(AuthoritiesConstants.USER));
-        Authentication token = new UsernamePasswordAuthenticationToken(loginid, passwd, authorities);
+        Authentication authToken = new UsernamePasswordAuthenticationToken(loginid, passwd, authorities);
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(token);
+        securityContext.setAuthentication(authToken);
         SecurityContextHolder.setContext(securityContext);
-        log.debug("loginAs: using loginid={} for member={}", loginid, member);
-        return SecurityContextHolder.getContext().getAuthentication();
+        request.getSession(true).setAttribute(SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
+        String jsessions = AuthUtils.getCookieValue("JSESSIONID", request);
+        log.debug("loginAs: using loginid={} for member={} JSESSIONID=", loginid, member, jsessions);
+        return authToken;
     }
 
     private void resetGame(GameInst gameInst) {
@@ -309,7 +324,7 @@ public class GameInstResourceExt extends GameInstResource {
     }
 
     // https://lobby2.thegraid.com:8442/lobby/gi/redit/A/154
-    @RequestMapping(value = "redit/{role:[AB]}/{giid}") // TODO: redit/{giid}/{rold:[AB]}
+    @RequestMapping(value = "redit/{giid}/{role:[AB]}")
     //@ResponseBody
     public RedirectView resetGiid(@PathVariable("role") String role, @PathVariable("giid") Long giid, HttpServletRequest request) {
         Optional<GameInst> gameInstOpt = gameInstRepository.findById(giid);
@@ -327,26 +342,46 @@ public class GameInstResourceExt extends GameInstResource {
         Player player = gamePlayer1.getPlayer();
         User user = player.getUser();
         log.debug("\nPlayer: {}, \nUser: {}", player, user);
-        Principal principal = (Principal) loginAs(user);
-        if (principal == null) {
+        if (loginAs(user, request) == null) {
             throw new IllegalStateException("Could not login as " + user.getLogin());
         }
-        log.debug("Principal requesting reset: {} of gameInst= {}", principal.getName(), gameInst);
+        log.debug("Principal requesting reset: {} of gameInst= {}", user.getLogin(), gameInst);
 
         resetGame(gameInst); // nullify started and results [does not change hostUrl]
 
-        String hostUrl = gameInst.getHostUrl(); // "https://game5.gamma.com:8445/launcher/GameControl/giid"
-        log.debug("resetGiid: hostUrl = {}", hostUrl);
-        if (hostUrl == null || hostUrl.isEmpty()) {
-            hostUrl = launchHosts[0];
-            gameInst.setHostUrl(hostUrl); // set so Launcher can find in gameInst
-            gameInstRepository.save(gameInst); // the latest target Launcher
-        }
-
-        log.info("launch giid {} from hostUrl: {}", giid, hostUrl);
+        // get [login] Url with validationToken(user,gpid)
         String redirectUrl = launchGame(gamePlayers, role, request); // gamePlayer[s]->gameInst->giid
         log.debug("new RedirectView({})", redirectUrl);
         return new RedirectView(redirectUrl);
+    }
+
+    @RequestMapping(value = "afterLogin/{valid}")
+    public RedirectView afterLogin(
+        @PathVariable(value = "valid", required = false) Boolean valid,
+        @RequestParam("P") String p, // hash
+        @RequestParam("T") String t, // timelimit
+        @RequestParam("U") String u, // user.loginId
+        @RequestParam("V") String v, // gpid [giid, gamePlayer -> {role,display_client}]
+        HttpServletRequest request
+    ) {
+        final String home = ""; // HOME "https://lobby2.thegraid.com:8442" https://stackoverflow.com/questions/52689585/how-to-redirect-at-home-page-if-any-router-does-not-exist-in-jhipster-angular-4
+        final String jsessions = AuthUtils.getCookieValue("JSESSIONID", request);
+        final String qsf = "gi/afterLogin/%s?P=%s&T=%s&U=%s&V=%s";
+        final String rdv = String.format(qsf, valid, p, t, u, v);
+        log.debug("afterLogin: {} {}", rdv, jsessions);
+        final boolean isValid = gameTicketService.validateTicket(p, t, u, v, jsessions);
+        if (!isValid) {
+            return new RedirectView(home);
+        }
+        String loginid = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!loginid.equals(u)) return new RedirectView(home);
+        //User user = userService.getUserWithAuthoritiesByLogin(loginid).get();
+        Long gpid = Long.parseLong(v);
+        GamePlayer gamePlayer = gamePlayerRepository.getReferenceById(gpid);
+        Player player = gamePlayer.getPlayer();
+        //String role = gamePlayer.getRole();
+        String dispC = player.getDisplayClient();
+        return new RedirectView(dispC);
     }
 
     // Start game [delegate to GameLauncher] & download [JNLP? Flash? whatever...]
@@ -362,21 +397,18 @@ public class GameInstResourceExt extends GameInstResource {
         GameInst gameInst = gamePlayers.get(ROLE_A).getGameInst(); // each GamePlayer has same GameInst
         Long giid = gameInst.getId();
 
-        String base = request.getRequestURL().toString(); //baseURL(request);
-        log.warn("launchGame: {} from {}", gameInst, base); // identify this lobby?
+        String baseUrl = request.getRequestURL().toString(); //baseURL(request);
+        log.warn("launchGame: {} from {}", gameInst, baseUrl); // identify this lobby?
         String url1 = loginUrl(gamePlayers.get(role), request);
         // why synchronized here? maybe multiple client requests. ?SAME? Entity (no, entity is per-hibernate-session)
         // we are trusting that hibernate will 'sync' entity state across servers?
         synchronized (gameInst) {
             if (gameInst.getStarted() != null) {
-                log.warn("Game already started: {} @ {}", url1, gameInst.getStarted());
+                log.warn("launchGame: Game already started: {} @ {}", url1, gameInst.getStarted());
                 return url1; // [re]start login & loading displayClient
             }
             Optional<GameInstProps> gamePropsOpt = gameInstPropsRepository.findById(giid);
             GameInstProps gameProps = gamePropsOpt.isPresent() ? gamePropsOpt.get() : new GameInstProps();
-
-            log.warn("launchGame: gameLauncher={}", this.gameLauncher);
-            log.warn("launchGame: gameProps={}", gameProps);
 
             LaunchInfo info = new LaunchInfo();
             info.gameInst = toType(gameInst, IGameInstDTO.Impl.class);
@@ -386,20 +418,28 @@ public class GameInstResourceExt extends GameInstResource {
             info.resultTicket = this.getValidationToken(gamePlayers.get(role), request);
             log.warn("launchGame: launchInfo={}", jsonify(info));
 
+            String hostUrl = gameInst.getHostUrl(); // "game5.gamma.com:8445"
+            if (hostUrl == null || hostUrl.isEmpty()) {
+                int choose = (int) Math.random() * launchHosts.length;
+                hostUrl = launchHosts[choose];
+                log.debug("launchGame: choose hostUrl = {}", hostUrl);
+                gameInst.setHostUrl(hostUrl); // set so Launcher can find in gameInst
+                gameInstRepository.save(gameInst);
+            }
+            log.info("launchGame: launch giid {} from hostUrl: {}", giid, hostUrl);
+
             // HttpInvoker-based Launcher; wait and parse the results into LaunchResults
-            LaunchResults results = gameLauncher.launchPost(gameInst.getHostUrl(), info);
+            LaunchResults results = gameLauncher.launchPost(hostUrl, info); // results now simply: "started"
             // Optional<GameInst> gameInstOpt = gameInstRepository.findById(giid); // try get NEW values
             // gameInst = gameInstOpt.get(); // ASSERT: gameInstOpt.isPresent()
             log.debug("Launched giid: {}, results={}", giid, jsonify(results));
 
             if (results == null || results.getStarted() == null) {
-                log.warn("Game launch failed: {} \nfrom {} \nresults={}", gameInst, base, jsonify(results));
+                log.warn("Game launch failed: {} \nfrom {} \nresults={}", gameInst, baseUrl, jsonify(results));
                 // TODO: something to provoke notification to the Member(s)' web page.
                 return editUrl(role, gameInst) + "#fail";
             }
-            URL hostUrl = newURL(results.getHostURL());
-            String hostPort = hostUrl.getHost() + ":" + hostUrl.getPort();
-            gameInst.setHostUrl(hostPort);
+
             gameInst.setStarted(results.getStarted());
             gameInstRepository.save(gameInst); // update started (& hostUrl)
             url1 = loginUrl(gamePlayers.get(role), request);
@@ -486,7 +526,7 @@ public class GameInstResourceExt extends GameInstResource {
         return token;
     }
 
-    // InfoService for GamaLauncher
+    // InfoService for GamaLauncher -- obsolete
     @RequestMapping("info/{giid}")
     public GameInstDTO getGameInfo(@PathVariable("giid") Long giid, HttpServletRequest request) {
         log.debug("getGameInfo({})", giid);
@@ -494,13 +534,15 @@ public class GameInstResourceExt extends GameInstResource {
         GameInstDTO dto = optGameInstDTO.get();
         //Long propsId = dto.getPropsId();
         //gameInstPropsService
-        // TODO: must include gameInstProps; getPropertyMap();
+        // TODO: include gameInstProps
         // gameInstDTO implements com.thegraid.lobby.domain.intf.IGameInstDTO
         log.debug("getGameInfo({}) GameInstDTO = {{}}", giid, dto);
         return dto;
     }
 
     // doc says RequestParam works for query-params AND form-data
+    // callback from Launcher [TDB] - obsolete: launch returns LaunchResults/JSON -> save(started)
+    // may need something for end of game?
     @RequestMapping("update/{giid}")
     public boolean updateGameInfo(
         @PathVariable("giid") Long giid,

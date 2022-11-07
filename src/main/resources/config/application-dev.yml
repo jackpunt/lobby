@@ -20,6 +20,7 @@ logging:
     tech.jhipster: DEBUG
     org.hibernate.SQL: WARN
     com.thegraid.gamma: DEBUG
+    com.thegraid.share.auth.TicketService: TRACE
     javax.management: WARN
     # org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
 
