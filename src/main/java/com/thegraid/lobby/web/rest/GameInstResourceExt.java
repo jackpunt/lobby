@@ -351,12 +351,20 @@ public class GameInstResourceExt extends GameInstResource {
 
         // get [login] Url with validationToken(user,gpid)
         String redirectUrl = launchGame(gamePlayers, role, request); // gamePlayer[s]->gameInst->giid
-        log.debug("new RedirectView({})", redirectUrl);
-        return new RedirectView(redirectUrl);
+        RedirectView rdv = new RedirectView(redirectUrl);
+        log.debug("new RedirectView({}) = {}", redirectUrl, rdv);
+        return rdv;
     }
 
-    @RequestMapping(value = "afterLogin/{valid}")
-    public RedirectView afterLogin(
+    /** URL to load Player's displayClient. */
+    private String afterLaunchUrl(GamePlayer gamePlayer, HttpServletRequest request) {
+        final String url = "/lobby/gi/afterLaunch/true?";
+        final String token = getValidationToken(gamePlayer, request);
+        return url + token;
+    }
+
+    @RequestMapping(value = "afterLaunch/{valid}") // ? P=xxx&T=123&U=user&V=giid
+    public RedirectView afterLaunch(
         @PathVariable(value = "valid", required = false) Boolean valid,
         @RequestParam("P") String p, // hash
         @RequestParam("T") String t, // timelimit
@@ -366,9 +374,9 @@ public class GameInstResourceExt extends GameInstResource {
     ) {
         final String home = ""; // HOME "https://lobby2.thegraid.com:8442" https://stackoverflow.com/questions/52689585/how-to-redirect-at-home-page-if-any-router-does-not-exist-in-jhipster-angular-4
         final String jsessions = AuthUtils.getCookieValue("JSESSIONID", request);
-        final String qsf = "gi/afterLogin/%s?P=%s&T=%s&U=%s&V=%s";
+        final String qsf = "gi/afterLaunch/%s?P=%s&T=%s&U=%s&V=%s";
         final String rdv = String.format(qsf, valid, p, t, u, v);
-        log.debug("afterLogin: {} {}", rdv, jsessions);
+        log.debug("afterLaunch: {} {}", rdv, jsessions);
         final boolean isValid = gameTicketService.validateTicket(p, t, u, v, jsessions);
         if (!isValid) {
             return new RedirectView(home);
@@ -376,12 +384,15 @@ public class GameInstResourceExt extends GameInstResource {
         String loginid = SecurityContextHolder.getContext().getAuthentication().getName();
         if (!loginid.equals(u)) return new RedirectView(home);
         //User user = userService.getUserWithAuthoritiesByLogin(loginid).get();
-        Long gpid = Long.parseLong(v);
-        GamePlayer gamePlayer = gamePlayerRepository.getReferenceById(gpid);
-        Player player = gamePlayer.getPlayer();
-        //String role = gamePlayer.getRole();
-        String dispC = player.getDisplayClient();
-        return new RedirectView(dispC);
+        final Long gpid = Long.parseLong(v);
+        final GamePlayer gamePlayer = gamePlayerRepository.findById(gpid).get(); // Assert Optional.isPresent()
+        final GameInst gameInst = gamePlayer.getGameInst();
+        final String hostPort = gameInst.getHostUrl();
+        final String qs = String.format("?game=%s/clientGame", hostPort); // [wss://] host.thegraid.com:port/clientGame
+        final Player player = gamePlayer.getPlayer();
+        //final String role = gamePlayer.getRole();
+        final String dispC = player.getDisplayClient();
+        return new RedirectView(dispC + qs);
     }
 
     // Start game [delegate to GameLauncher] & download [JNLP? Flash? whatever...]
@@ -399,7 +410,7 @@ public class GameInstResourceExt extends GameInstResource {
 
         String baseUrl = request.getRequestURL().toString(); //baseURL(request);
         log.warn("launchGame: {} from {}", gameInst, baseUrl); // identify this lobby?
-        String url1 = loginUrl(gamePlayers.get(role), request);
+        String url1 = afterLaunchUrl(gamePlayers.get(role), request);
         // why synchronized here? maybe multiple client requests. ?SAME? Entity (no, entity is per-hibernate-session)
         // we are trusting that hibernate will 'sync' entity state across servers?
         synchronized (gameInst) {
@@ -442,7 +453,7 @@ public class GameInstResourceExt extends GameInstResource {
 
             gameInst.setStarted(results.getStarted());
             gameInstRepository.save(gameInst); // update started (& hostUrl)
-            url1 = loginUrl(gamePlayers.get(role), request);
+            url1 = afterLaunchUrl(gamePlayers.get(role), request);
             // other player needs to login to Lobby to obtain their login to Game
 
         }
@@ -524,48 +535,5 @@ public class GameInstResourceExt extends GameInstResource {
         Long gpid = gamePlayer.getId(); // @NotNull (was gamePlayer.getRole())
         String token = gameTicketService.getTicket(username, validTime, gpid, jsessions); // includes U=loginId
         return token;
-    }
-
-    // InfoService for GamaLauncher -- obsolete
-    @RequestMapping("info/{giid}")
-    public GameInstDTO getGameInfo(@PathVariable("giid") Long giid, HttpServletRequest request) {
-        log.debug("getGameInfo({})", giid);
-        Optional<GameInstDTO> optGameInstDTO = gameInstService.findOne(giid);
-        GameInstDTO dto = optGameInstDTO.get();
-        //Long propsId = dto.getPropsId();
-        //gameInstPropsService
-        // TODO: include gameInstProps
-        // gameInstDTO implements com.thegraid.lobby.domain.intf.IGameInstDTO
-        log.debug("getGameInfo({}) GameInstDTO = {{}}", giid, dto);
-        return dto;
-    }
-
-    // doc says RequestParam works for query-params AND form-data
-    // callback from Launcher [TDB] - obsolete: launch returns LaunchResults/JSON -> save(started)
-    // may need something for end of game?
-    @RequestMapping("update/{giid}")
-    public boolean updateGameInfo(
-        @PathVariable("giid") Long giid,
-        @RequestParam(name = "time") Instant timestamp,
-        @RequestParam(name = "hostUrl") String hostUrl
-    ) {
-        if (timestamp == null) {
-            log.error("Game Launch failed: giid={} @ {}", giid, timestamp);
-            return true;
-        }
-        Instant started = timestamp;
-        Optional<GameInstDTO> optGameInstDTO = gameInstService.findOne(giid);
-        GameInstDTO dto = optGameInstDTO.get();
-        try {
-            dto.setStarted(started); // mark start time
-            dto.setHostUrl(hostUrl); // on which server
-            gameInstService.save(dto); // back to database.
-        } catch (Exception ex) {
-            log.error("while gameInstService.save(started {}): {}", giid, ex);
-            return false;
-            // not clear what can we do about it; retry?
-            // the game is presumably already in progress
-        }
-        return true;
     }
 }
