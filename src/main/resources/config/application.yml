@@ -162,7 +162,7 @@ server:
         secure: true
         http-only: true
         domain: thegraid.com
-        max-age: 3M # 3 minute (for now) instead of infinite
+        max-age: 60M # 60 minute (for now) instead of infinite [for JSESSIONID]
         # name: JSESSIONID
 
 springdoc:

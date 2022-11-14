@@ -42,7 +42,7 @@ application {
 
   entities AccountInfo, Asset, GameClass, GameInst, GameInstProps, GamePlayer, MemberGameProps, Player
 }
-/** extension to User (user is the owner of a stable of horses) 
+/** extension to User (user is the owner of a stable of horses)
  * Account Type indicates the payment properties and the League user is in.
  * maybe this could fold into User.role ?
  */
@@ -63,10 +63,10 @@ entity Asset {
   main Boolean
   /** bot is full-auto */
   auto Boolean
-  /** url to asset (class or document/resource) 
-   jar-path ! fqcn.of.asset.class 
-   jar-path ! path/inside/jar/document 
-   URL=getenv(“ASSETBASE”)+path/to/release.jar ! user.supplied.Player 
+  /** url to asset (class or document/resource)
+   jar-path ! fqcn.of.asset.class
+   jar-path ! path/inside/jar/document
+   URL=getenv(“ASSETBASE”)+path/to/release.jar ! user.supplied.Player
   */
   path String
   /** comma-separated list of asset Ids */
@@ -150,7 +150,7 @@ entity MemberGameProps {
   /** MyGameConfig */
   configName String maxlength(45)
 }
-/** A Member-owned PlayerAI [Asset] with a displayClient [Asset]
+/** A Member-owned PlayerAI [Asset] with a displayClient [URL]
     a virtual player (the horse in a horse-race)  */
 entity Player { // DTO
   @Version
@@ -163,14 +163,14 @@ entity Player { // DTO
   score Integer
   scoreTime Instant
   rankTime Instant
-  /** URL path fragment to download display client from graid server.
-  Probably redo as reference to display_client table entry or an asset entry. */
+  /** URL [path fragment?] to download display client from graid server.
+  Maybe redo as reference to display_client table entry or an asset entry. */
   displayClient String maxlength(64)
 }
 
 relationship OneToOne {
   AccountInfo to @Id User // extension to 'user'
-  GameInstProps{gameInst} to @Id GameInst{props} 
+  GameInstProps{gameInst} to @Id GameInst{props}
 }
 relationship ManyToOne {
   GamePlayer{gameInst} to GameInst

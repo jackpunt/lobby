@@ -2,11 +2,6 @@ package com.thegraid.lobby.web.rest;
 
 import static org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.thegraid.lobby.domain.GameInst;
 import com.thegraid.lobby.domain.GameInstProps;
 import com.thegraid.lobby.domain.GamePlayer;
@@ -18,7 +13,6 @@ import com.thegraid.lobby.repository.GamePlayerRepositoryExt;
 import com.thegraid.lobby.security.AuthoritiesConstants;
 import com.thegraid.lobby.service.GameInstService;
 import com.thegraid.lobby.service.UserService;
-import com.thegraid.lobby.service.dto.GameInstDTO;
 import com.thegraid.share.LobbyLauncher.GameResults;
 import com.thegraid.share.LobbyLauncher.LaunchInfo;
 import com.thegraid.share.LobbyLauncher.LaunchResults;
@@ -26,12 +20,11 @@ import com.thegraid.share.auth.AuthUtils;
 import com.thegraid.share.auth.AuthUtils.RestTemplateWithAuth;
 import com.thegraid.share.auth.NotGameException;
 import com.thegraid.share.auth.TicketService.GameTicketService;
+import com.thegraid.share.domain.intf.IAssetDTO;
 import com.thegraid.share.domain.intf.IGameInstDTO;
 import com.thegraid.share.domain.intf.IGameInstPropsDTO;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.Principal;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -51,7 +44,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -176,31 +168,6 @@ public class GameInstResourceExt extends GameInstResource {
         return editPath(role, gameInst.getId());
     }
 
-    // TODO: try use Spring's ObjectMapper.
-    // https://stackoverflow.com/questions/30060006/how-do-i-obtain-the-jackson-objectmapper-in-use-by-spring-4-1
-    // For now, add JavaTimeModule()
-    // https://github.com/FasterXML/jackson-modules-java8/tree/2.14/datetime
-    static ObjectMapper mapper = JsonMapper.builder().addModule(new JavaTimeModule()).build().setDefaultPropertyInclusion(Include.NON_NULL);
-
-    private String jsonify(Object obj) {
-        // https://www.baeldung.com/spring-boot-customize-jackson-objectmapper#1-objectmapper
-        try {
-            return mapper.writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("JSON conversion failed", e);
-        }
-    }
-
-    private <T> T toType(Object obj, Class<T> clazz) {
-        try {
-            String content = jsonify(obj);
-            return mapper.readValue(content, clazz);
-        } catch (JsonProcessingException ex) {
-            log.error("toType: FAILED - " + ex.getMessage());
-            return null;
-        }
-    }
-
     /** GamePlayer.role value for PlayerA */
     public static final String ROLE_A = "A";
 
@@ -229,8 +196,6 @@ public class GameInstResourceExt extends GameInstResource {
     @Autowired
     private GameTicketService gameTicketService;
 
-    private final GameInstService gameInstService;
-
     private final GameInstRepository gameInstRepository;
 
     private final GameInstPropsRepository gameInstPropsRepository;
@@ -245,7 +210,6 @@ public class GameInstResourceExt extends GameInstResource {
         GamePlayerRepositoryExt gamePlayerRepository
     ) {
         super(gameInstService, gameInstRepository);
-        this.gameInstService = gameInstService;
         this.gameInstRepository = gameInstRepository;
         this.gameInstPropsRepository = gameInstPropsRepository;
         this.gamePlayerRepository = gamePlayerRepository;
@@ -418,17 +382,7 @@ public class GameInstResourceExt extends GameInstResource {
                 log.warn("launchGame: Game already started: {} @ {}", url1, gameInst.getStarted());
                 return url1; // [re]start login & loading displayClient
             }
-            Optional<GameInstProps> gamePropsOpt = gameInstPropsRepository.findById(giid);
-            GameInstProps gameProps = gamePropsOpt.isPresent() ? gamePropsOpt.get() : new GameInstProps();
-
-            LaunchInfo info = new LaunchInfo();
-            info.gameInst = toType(gameInst, IGameInstDTO.Impl.class);
-            info.gameProps = toType(gameProps, IGameInstPropsDTO.Impl.class);
-            info.gpidA = gamePlayers.get(ROLE_A).getId();
-            info.gpidB = gamePlayers.get(ROLE_B).getId();
-            info.resultTicket = this.getValidationToken(gamePlayers.get(role), request);
-            log.warn("launchGame: launchInfo={}", jsonify(info));
-
+            LaunchInfo info = getLaunchInfo(gameInst, gamePlayers, role, request);
             String hostUrl = gameInst.getHostUrl(); // "game5.gamma.com:8445"
             if (hostUrl == null || hostUrl.isEmpty()) {
                 int choose = (int) Math.random() * launchHosts.length;
@@ -443,10 +397,10 @@ public class GameInstResourceExt extends GameInstResource {
             LaunchResults results = gameLauncher.launchPost(hostUrl, info); // results now simply: "started"
             // Optional<GameInst> gameInstOpt = gameInstRepository.findById(giid); // try get NEW values
             // gameInst = gameInstOpt.get(); // ASSERT: gameInstOpt.isPresent()
-            log.debug("Launched giid: {}, results={}", giid, jsonify(results));
+            log.debug("Launched giid: {}, results={}", giid, AuthUtils.jsonify(results));
 
             if (results == null || results.getStarted() == null) {
-                log.warn("Game launch failed: {} \nfrom {} \nresults={}", gameInst, baseUrl, jsonify(results));
+                log.warn("Game launch failed: {} \nfrom {} \nresults={}", gameInst, baseUrl, AuthUtils.jsonify(results));
                 // TODO: something to provoke notification to the Member(s)' web page.
                 return editUrl(role, gameInst) + "#fail";
             }
@@ -475,26 +429,38 @@ public class GameInstResourceExt extends GameInstResource {
         }
     }
 
+    /**
+     *
+     * @param gameInst -> giid -> gameProps
+     * @param gamePlayers -> gpidA, gpidB
+     * @param role -> gamePlayer -> User -> loginid -> token
+     * @param request -> jsessionid -> token
+     * @return
+     */
     LaunchInfo getLaunchInfo(GameInst gameInst, Map<String, GamePlayer> gamePlayers, String role, HttpServletRequest request) {
         Long giid = gameInst.getId();
         Optional<GameInstProps> gamePropsOpt = gameInstPropsRepository.findById(giid);
         GameInstProps gameProps = gamePropsOpt.isPresent() ? gamePropsOpt.get() : new GameInstProps();
-
-        log.warn("launchGame: gameLauncher={}", this.gameLauncher);
         log.warn("launchGame: gameProps={}", gameProps);
+        log.warn("launchGame: gameInst ={}", AuthUtils.jsonify(gameInst));
+        IGameInstPropsDTO.Impl instProps = AuthUtils.toType(gameProps, IGameInstPropsDTO.Impl.class);
+        IGameInstDTO.Impl gameInstImpl = AuthUtils.toType(gameInst, IGameInstDTO.Impl.class);
+        gameInstImpl.getPlayerA().setMainJar(AuthUtils.toType(gameInst.getPlayerA().getMainJar(), IAssetDTO.Impl.class));
+        gameInstImpl.getPlayerB().setMainJar(AuthUtils.toType(gameInst.getPlayerB().getMainJar(), IAssetDTO.Impl.class));
+        gameInstImpl.setProperyMap(instProps.asMap());
+        gameInstImpl.setProps(null);
 
         LaunchInfo info = new LaunchInfo();
-        info.gameInst = toType(gameInst, IGameInstDTO.Impl.class);
-        info.gameProps = toType(gameProps, IGameInstPropsDTO.Impl.class);
+        info.gameInst = gameInstImpl;
         info.gpidA = gamePlayers.get(ROLE_A).getId();
         info.gpidB = gamePlayers.get(ROLE_B).getId();
         info.resultTicket = this.getValidationToken(gamePlayers.get(role), request);
-        log.warn("launchGame: launchInfo={}", jsonify(info));
+        log.warn("launchGame: launchInfo={}", AuthUtils.jsonify(info));
         return info;
     }
 
     /**
-     * login to game server.
+     * loginUrl for game/launch server.
      * @param gamePlayer -> gameInst -> hostUrl
      * @param request -> cookies -> JSESSIONID
      * @return gameLoginPath(hostPort, giid, token)
@@ -511,8 +477,8 @@ public class GameInstResourceExt extends GameInstResource {
     // see also: https://www.baeldung.com/spring-security-oauth-jwt
     /**
      * build a validation token for the GamePlayer's current request/session.
-     * @param gamePlayer
-     * @param request
+     * @param gamePlayer -> Player -> User -> loginId
+     * @param request -> jsessionid -> hash -> token
      * @return token (or null if no JSESSSIONID)
      */
     private String getValidationToken(GamePlayer gamePlayer, HttpServletRequest request) {
